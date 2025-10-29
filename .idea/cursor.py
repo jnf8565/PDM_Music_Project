@@ -1,36 +1,41 @@
-import psycopg2
-from dotenv import load_dotenv
 import os
+import psycopg2 as pg2
+from dotenv import load_dotenv
 from sshtunnel import SSHTunnelForwarder
 
-username = "YOUR_CS_USERNAME"
-password = "YOUR_CS_PASSWORD"
-dbName = "YOUR_DB_NAME"
 
 load_dotenv()
 
-def connection():
+
+def query(sql_query):
+    db_name = os.getenv("DB_NAME")
+    username = os.getenv("DB_USER")
+    password = os.getenv("DB_PASS")
     try:
-        with SSHTunnelForwarder(('starbug.cs.rit.edu', 22),
-                                ssh_username=username,
-                                ssh_password=password,
-                                remote_bind_address=('127.0.0.1', 5432)) as server:
-            server.start()
-            print("SSH tunnel established")
+        with SSHTunnelForwarder(
+            ('starbug.cs.rit.edu', 22),
+            ssh_username = username,
+            ssh_password = password,
+            remote_bind_address=('127.0.0.1', 5432)
+            ) as tunnel:
+           
+            tunnel.start()
             params = {
-                'dbname': dbName,
-                'user': username,
-                'password': password,
-                'host': 'localhost',
-                'port': server.local_bind_port
+                'database' : db_name,
+                'user' : username,
+                'password' : password,
+                'host' : 'localhost',
+                'port' : tunnel.local_bind_port
             }
 
 
-            conn = psycopg.connect(**params)
-            curs = conn.cursor()
-            print("Database connection established")
-
-
-            conn.close()
+            connection = pg2.connect(**params)
+            cursor = connection.cursor()
+            cursor.execute(sql_query)
+            connection.commit()
+            return connection
     except Exception as e:
-        print("Connection failed:", e)
+        print(e)
+        if connection != None:
+            connection.close()
+
