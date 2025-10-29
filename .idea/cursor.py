@@ -1,13 +1,36 @@
-import os
-import psycopg2 as pg2
+import psycopg2
 from dotenv import load_dotenv
+import os
+from sshtunnel import SSHTunnelForwarder
 
-connection = pg2.connect(
-    host=os.getenv("DB_HOST"),
-    database=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASS"),
-    port=os.getenv("DB_PORT")
-    )
+username = "YOUR_CS_USERNAME"
+password = "YOUR_CS_PASSWORD"
+dbName = "YOUR_DB_NAME"
 
-cursor = connection.cursor()
+load_dotenv()
+
+def connection():
+    try:
+        with SSHTunnelForwarder(('starbug.cs.rit.edu', 22),
+                                ssh_username=username,
+                                ssh_password=password,
+                                remote_bind_address=('127.0.0.1', 5432)) as server:
+            server.start()
+            print("SSH tunnel established")
+            params = {
+                'dbname': dbName,
+                'user': username,
+                'password': password,
+                'host': 'localhost',
+                'port': server.local_bind_port
+            }
+
+
+            conn = psycopg.connect(**params)
+            curs = conn.cursor()
+            print("Database connection established")
+
+
+            conn.close()
+    except Exception as e:
+        print("Connection failed:", e)

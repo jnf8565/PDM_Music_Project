@@ -1,0 +1,14 @@
+# from cursor import connection
+
+# def create_playlist(uid, name):
+
+# def rename_playlist(pid, new_name):
+
+# def delete_playlist(pid):
+
+# def add_song_to_playlist(pid, sid):
+
+# def remove_song_from_playlist(pid, sid):
+
+# def list_user_playlists(uid):
+
