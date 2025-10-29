@@ -2,7 +2,7 @@
 # from cursor import connection
 
 # def create_user(username, email, password):
-#     conn = get_connection()
+#     conn = connection()
 #     cur = conn.cursor()
 #     created_at = datetime.now()
 #     query = """
