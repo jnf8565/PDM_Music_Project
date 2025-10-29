@@ -1,5 +1,26 @@
+# from datetime import date
 # from cursor import connection
 
-# def search_songs(term, sort_by"song", order="asc"):
+# def create_user(username, email, password):
+#     conn = connection()
+#     cur = conn.cursor()
+#     created_at = datetime.now()
+#     query = """
+#         INSERT INTO users (username, email, password, creation_date, last_access)
+#         VALUES (%s, %s, %s, %s, %s)
+#         RETURNING uid;
+#     """
+#     cur.execute(query, (username, email, password, created_at, created_at))
+#     uid = cur.fetchone()[0]
+#     conn.commit()
+#     cur.close()
+#     conn.close()
+#     return uid
 
-# def song_played(uid, sid):
+# def login_user(email, password):
+    
+#     return user
+
+# def follow_user(follower_id, followee_id):
+
+# def unfollow_user(follower_id, followee_id):
