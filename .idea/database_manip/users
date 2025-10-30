@@ -21,6 +21,8 @@
     
 #     return user
 
+# def search_users_by_email(email_term):
+
 # def follow_user(follower_id, followee_id):
 
 # def unfollow_user(follower_id, followee_id):
