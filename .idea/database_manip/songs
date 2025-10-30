@@ -1,7 +1,23 @@
 from cursor import query
 from datetime import *
 
-def search_songs(term, sort_by="song", order="asc"):
+def search_songs():
+    term = input("Enter search term for song, artist, album, or genre: ").strip()
+    while not term:
+        print("Search term cannot be empty.")
+        term = input("Enter search term for song, artist, album, or genre: ").strip()
+
+    sort_by_options = ["song", "artist", "album", "genre", "year", "default"]
+    sort_by = input(f"Sort by ({'/'.join(sort_by_options)}), default is 'song': ").strip().lower()
+    if sort_by not in sort_by_options:
+        print("Invalid sort option, defaulting to 'song'.")
+        sort_by = "song"
+
+    order = input("Order ('asc' or 'desc'), default is 'asc': ").strip().lower()
+    if order not in ["asc", "desc"]:
+        print("Invalid order, defaulting to 'asc'.")
+        order = "asc"
+
     if sort_by == "default":
         order_clause = "s.Title ASC, a.Name ASC"
     else:
@@ -14,7 +30,7 @@ def search_songs(term, sort_by="song", order="asc"):
         sort_col = sort_map.get(sort_by.lower(), "s.Title")
         order_clause = f"{sort_col} {order.upper()}, a.Name {order.upper()}"
 
-    sql = f"""
+    results = query(f"""
         SELECT s.SUID,
                s.Title AS Song,
                a.Name  AS Artist,
@@ -35,12 +51,7 @@ def search_songs(term, sort_by="song", order="asc"):
            OR LOWER(g.Name)  LIKE LOWER('%{term}%')
         GROUP BY s.SUID, s.Title, a.Name, al.Title, s.Length, s.Release_Date, g.Name
         ORDER BY {order_clause};
-    """
-
-    conn = query(sql)
-    cur = conn.cursor()
-    results = cur.fetchall()
-    conn.close()
+    """)
 
     if not results:
         print("No songs found under inputted search term")
