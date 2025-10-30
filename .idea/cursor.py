@@ -7,7 +7,7 @@ from sshtunnel import SSHTunnelForwarder
 load_dotenv()
 
 
-def query(sql_query):
+def query(sql_query, fetch=False):
     db_name = os.getenv("DB_NAME")
     username = os.getenv("DB_USER")
     password = os.getenv("DB_PASS")
@@ -27,13 +27,17 @@ def query(sql_query):
                 'host' : 'localhost',
                 'port' : tunnel.local_bind_port
             }
-
-
             connection = pg2.connect(**params)
             cursor = connection.cursor()
             cursor.execute(sql_query)
+            if fetch:
+                result = cursor.fetchall()
+            else:
+                result = None    
             connection.commit()
-            return connection
+            cursor.close()
+            connection.close()
+            return result
     except Exception as e:
         print(e)
         if connection != None:
