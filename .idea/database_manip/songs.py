@@ -1,3 +1,4 @@
+
 from cursor import query
 from datetime import *
 
@@ -60,7 +61,49 @@ def search_songs():
     return results
 
 
-# def song_played(uid, sid):
+def song_played(uid, suid):
+    now = datetime.now()
+
+    results = query(f"""
+        INSERT INTO ListensTo (SUID, UID, StartTime, EndTime)
+        VALUES ('{suid}', '{uid}', '{now}', '{now}');
+    """)
+
+    if results:
+        print(f"Recorded play of song {suid}.")
+        return True
+    else:
+        print("Error recording song play.")
+        return False
 
 
-# def rate_song(uid, suid, stars):
+def rate_song(uid, suid, stars):
+    if stars < 1 or stars > 5:
+        print("Error: Rating must be between 1 and 5.")
+        return False
+
+    existing = query(f"""
+        SELECT * FROM Rates
+        WHERE SUID = '{suid}' AND UID = '{uid}';
+    """)
+
+    if existing:
+        results = query(f"""
+            UPDATE Rates
+            SET Stars = {stars}
+            WHERE SUID = '{suid}' AND UID = '{uid}';
+        """)
+        if results:
+            print(f"Updated rating to {stars} stars.")
+            return True
+    else:
+        results = query(f"""
+            INSERT INTO Rates (SUID, UID, Stars)
+            VALUES ('{suid}', '{uid}', {stars});
+        """)
+        if results:
+            print(f"Rated song {stars} stars.")
+            return True
+
+    print("Error rating song.")
+    return False
