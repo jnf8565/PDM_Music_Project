@@ -11,7 +11,7 @@ def create_playlist(uid):
       if pid is not None:
         query(f"INSERT INTO createsp VALUES ({uid},{pid})")
         print(f"Playlist {playlist_name} created")
-        return pid
+        return
       else:
         print("PID not found for playlist")
         return None
@@ -70,7 +70,7 @@ def select_song():
       print("Please enter a valid number.")
       return None
     
-def delete_playlist(uid):
+def slime_playlist(uid):
   name = input("Enter name of playlist to be deleted: ").strip()
   pid = get_pid(name,uid)
   if not pid:
@@ -124,11 +124,11 @@ def play_playlist(uid):
      return
   print(f"\nPlaying playlist '{playlists[selection - 1][1]}':")
   for s in songs:
-      sid, title, artist = s
+      suid, title, artist = s
       print(f"Now playing: {title} by {artist}")
       query(f"""
           INSERT INTO listensto (uid, suid, starttime)
-          VALUES ({uid}, {sid}, NOW())
+          VALUES ({uid}, {suid}, NOW())
           ON CONFLICT DO NOTHING;
       """)
   print("Finished playing playlist.")
@@ -169,3 +169,68 @@ def list_user_playlists(uid):
     total_duration_remaining_seconds = pl[3] % 60
     print(f"{idx}. {pl[1]} - {pl[2]} songs, {total_minutes}:{total_duration_remaining_seconds:02d} min")
   return playlists
+
+def find_album(name):
+  name = name.strip().replace("'", "''")
+  return query(f"SELECT alid, title FROM album WHERE title ILIKE '%{name}%' ORDER BY title ASC", fetch=True)
+
+def select_album():
+  name_input = input("Enter album name here: ").strip()
+  results = find_album(name_input)
+  if not results:
+    print("No album with that name")
+    return 
+  if len(results) == 1:
+    return results[0][0]
+  print("Multiple albums found")
+  for idx, s in enumerate(results, start=1):
+    print(f"{idx}. {s[1]} (ID: {s[0]})")
+  selection = input("Enter number for desired album: ")
+  try:
+      selection = int(selection)
+      if 1 <= selection <= len(results):
+          return results[selection - 1][0]
+      else:
+          print("Invalid selection.")
+          return None
+  except Exception:
+      print("Please enter a valid number.")
+      return None
+    
+
+def add_album_to_playlist(uid):
+  p_name = input("Enter name of playlist: ").strip()
+  if not p_name:
+    print("Empty playlist name")
+    return
+  pid = get_pid(p_name, uid)
+  if not pid:
+    print(f"Playlist {p_name} does not exist")
+    return
+  alid = select_album()
+  if not alid:
+      return
+  query(f"INSERT INTO addedalbumto (pid, alid) VALUES ({pid}, {alid}) ON CONFLICT DO NOTHING;")
+  print("Song added to playlist.")
+
+def remove_album_from_playlist(uid):
+  p_name = input("Enter playlist name here: ")
+  if not p_name:
+    print("Empty playlist name")
+    return
+  pid = get_pid(p_name, uid)
+  if not pid:
+    print(f"Playlist {p_name} does not exist")
+    return
+  alid = select_album()
+  in_playlist = query(
+        f"SELECT 1 FROM addedalbumto WHERE pid = {pid} AND alid = {alid}",
+        fetch=True
+        )
+  if not in_playlist:
+      print("That album is not in this playlist.")
+      return
+  if not alid:
+     return
+  query(f"DELETE FROM addedalbumto WHERE pid={pid} AND alid={alid}")
+  print("Song removed from playlist")
