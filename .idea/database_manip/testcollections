@@ -1,8 +1,8 @@
-from playlists import create_playlist, delete_playlist, rename_playlist, get_pid, add_song_to_playlist, list_user_playlists
+from playlists import create_playlist, delete_playlist, rename_playlist, get_pid, add_song_to_playlist, list_user_playlists, play_playlist
 
 
 if __name__ == "__main__":
-    list_user_playlists(12)
+    play_playlist(12)
     
     
     

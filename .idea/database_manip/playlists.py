@@ -66,7 +66,7 @@ def select_song():
       else:
           print("Invalid selection.")
           return None
-  except ValueError:
+  except Exception:
       print("Please enter a valid number.")
       return None
     
@@ -76,7 +76,8 @@ def delete_playlist(uid):
   if not pid:
        print(f"Playlist '{name}' does not exist")
        return
-  query(f"DELETE FROM addedto WHERE pid={pid}")
+  query(f"DELETE FROM addedsongto WHERE pid={pid}")
+  query(f"DELETE FROM addedalbumto WHERE pid={pid}")
   query(f"DELETE FROM createsp WHERE pid={pid}")
   query(f"DELETE FROM playlist WHERE pid={pid}")
   print("Playlist deleted")
@@ -89,14 +90,49 @@ def add_song_to_playlist(uid):
   pid = get_pid(p_name, uid)
   if not pid:
      print(f"Playlist {p_name} does not exist")
-  sid = select_song()
-  if not sid:
+  suid = select_song()
+  if not suid:
       return
-  query(f"INSERT INTO addedto (pid, suid) VALUES ({pid}, {sid}) ON CONFLICT DO NOTHING;")
+  query(f"INSERT INTO addedsongto (pid, suid) VALUES ({pid}, {suid}) ON CONFLICT DO NOTHING;")
   print("Song added to playlist.")
   
-
-# def play_playlist(uid):
+def play_playlist(uid):
+  playlists = list_user_playlists(uid)
+  if not playlists:
+    print("No playlists found")
+    return
+  selection = input("Enter the number of the playlist to play: ").strip()
+  try:
+      selection = int(selection)
+      if 1 <= selection <= len(playlists):
+          pid = playlists[selection - 1][0]
+      else:
+          print("Invalid selection.")
+          return
+  except Exception:
+      print("Please enter a valid number.")
+      return
+  songs = query(f"""
+        SELECT s.suid, s.title, s.artist
+        FROM addedsongto a
+        JOIN song s ON a.suid = s.suid
+        WHERE a.pid = {pid}
+        ORDER BY s.title ASC;
+    """, fetch=True)
+  if not songs:
+     print("Empty playlist")
+     return
+  print(f"\nPlaying playlist '{playlists[selection - 1][1]}':")
+  for s in songs:
+      sid, title, artist = s
+      print(f"Now playing: {title} by {artist}")
+      query(f"""
+          INSERT INTO listensto (uid, suid, starttime)
+          VALUES ({uid}, {sid}, NOW())
+          ON CONFLICT DO NOTHING;
+      """)
+  print("Finished playing playlist.")
+   
 
 def remove_song_from_playlist(uid):
   p_name = input("Enter playlist name here: ")
@@ -107,10 +143,10 @@ def remove_song_from_playlist(uid):
   if not pid:
     print(f"Playlist {p_name} does not exist")
     return
-  sid = select_song()
-  if not sid:
+  suid = select_song()
+  if not suid:
      return
-  query(f"DELETE FROM addedto WHERE pid={pid} AND sid={sid}")
+  query(f"DELETE FROM addedsongto WHERE pid={pid} AND sid={suid}")
   print("Song removed from playlist")
   
 def list_user_playlists(uid):
@@ -119,7 +155,7 @@ def list_user_playlists(uid):
               COALESCE(SUM(split_part(s.length, ':', 1)::int * 60 +
               split_part(s.length, ':', 2)::int), 0) AS total_duration
               FROM playlist p
-              LEFT JOIN addedto a ON p.pid = a.pid
+              LEFT JOIN addedsongto a ON p.pid = a.pid
               LEFT JOIN song s ON a.suid = s.suid
               WHERE p.uid = {uid}
               GROUP BY p.pid, p.name
