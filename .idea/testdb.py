@@ -1,4 +1,4 @@
-from cursor import query
+from database_manip.cursor import query
 
-query("INSERT into testusers (email, password) VALUES ('steve@gmail.com', '1234');")
+query("INSERT into playlist (name) VALUES ('myplaylist');")
 print("inserted user")

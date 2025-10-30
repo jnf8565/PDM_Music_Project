@@ -1,2 +1,2 @@
-from cursor import connection
+from database_manip.cursor import connection
 print(connection())
