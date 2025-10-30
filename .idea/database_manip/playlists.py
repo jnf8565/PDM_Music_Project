@@ -51,13 +51,17 @@ def select_song():
   name_input = input("Enter song name here: ").strip()
   results = find_song(name_input)
   if not results:
-    print("No song with that name")
-    return 
+      print("No song with that name")
+      return 
   if len(results) == 1:
-    return results[0][0]
+      return results[0][0]
   print("Multiple songs found")
-  for idx, s in enumerate(results, start=1):
-    print(f"{idx}. {s[1]} by {s[2]} (ID: {s[0]})")
+  index = 1
+  for album in results:
+      album_id = album[0]     # The album’s ID
+      album_title = album[1]  # The album’s title
+      print(f"{index}. {album_title} (ID: {album_id})")
+      index += 1
   selection = input("Enter number for desired song: ")
   try:
       selection = int(selection)
@@ -183,8 +187,10 @@ def select_album():
   if len(results) == 1:
     return results[0][0]
   print("Multiple albums found")
-  for idx, s in enumerate(results, start=1):
-    print(f"{idx}. {s[1]} (ID: {s[0]})")
+  for i in range(len(results)):
+    album_id = results[i][0]
+    album_name = results[i][1]
+    print(f"{i + 1}. {album_name} (ID: {album_id})")
   selection = input("Enter number for desired album: ")
   try:
       selection = int(selection)
