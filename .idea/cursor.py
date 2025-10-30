@@ -11,6 +11,7 @@ def query(sql_query, fetch=False):
     db_name = os.getenv("DB_NAME")
     username = os.getenv("DB_USER")
     password = os.getenv("DB_PASS")
+    connection = None
     try:
         with SSHTunnelForwarder(
             ('starbug.cs.rit.edu', 22),
@@ -28,13 +29,13 @@ def query(sql_query, fetch=False):
                 'port' : tunnel.local_bind_port
             }
             connection = pg2.connect(**params)
+            connection.autocommit = True
             cursor = connection.cursor()
             cursor.execute(sql_query)
             if fetch:
                 result = cursor.fetchall()
             else:
-                result = None    
-            connection.commit()
+                result = None
             cursor.close()
             connection.close()
             return result
