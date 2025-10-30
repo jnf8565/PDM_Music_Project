@@ -1,4 +1,3 @@
-
 from cursor import query
 from datetime import *
 
@@ -26,7 +25,7 @@ def search_songs():
             "song": "s.Title",
             "artist": "a.Name",
             "genre": "g.Name",
-            "year": "s.Release_Date"
+            "year": "s.ReleaseDate"
         }
         sort_col = sort_map.get(sort_by.lower(), "s.Title")
         order_clause = f"{sort_col} {order.upper()}, a.Name {order.upper()}"
@@ -50,60 +49,18 @@ def search_songs():
            OR LOWER(a.Name)  LIKE LOWER('%{term}%')
            OR LOWER(al.Title) LIKE LOWER('%{term}%')
            OR LOWER(g.Name)  LIKE LOWER('%{term}%')
-        GROUP BY s.SUID, s.Title, a.Name, al.Title, s.Length, s.Release_Date, g.Name
+        GROUP BY s.SUID, s.Title, a.Name, al.Title, s.Length, s.ReleaseDate, g.Name
         ORDER BY {order_clause};
-    """)
+    """, fetch=True)
 
     if not results:
         print("No songs found under inputted search term")
         return []
     print(f"Search results for '{term}':\n")
-    return results
+    print(results)
 
 
-def song_played(uid, suid):
-    now = datetime.now()
-
-    results = query(f"""
-        INSERT INTO ListensTo (SUID, UID, StartTime, EndTime)
-        VALUES ('{suid}', '{uid}', '{now}', '{now}');
-    """)
-
-    if results:
-        print(f"Recorded play of song {suid}.")
-        return True
-    else:
-        print("Error recording song play.")
-        return False
+# def song_played(uid, sid):
 
 
-def rate_song(uid, suid, stars):
-    if stars < 1 or stars > 5:
-        print("Error: Rating must be between 1 and 5.")
-        return False
-
-    existing = query(f"""
-        SELECT * FROM Rates
-        WHERE SUID = '{suid}' AND UID = '{uid}';
-    """)
-
-    if existing:
-        results = query(f"""
-            UPDATE Rates
-            SET Stars = {stars}
-            WHERE SUID = '{suid}' AND UID = '{uid}';
-        """)
-        if results:
-            print(f"Updated rating to {stars} stars.")
-            return True
-    else:
-        results = query(f"""
-            INSERT INTO Rates (SUID, UID, Stars)
-            VALUES ('{suid}', '{uid}', {stars});
-        """)
-        if results:
-            print(f"Rated song {stars} stars.")
-            return True
-
-    print("Error rating song.")
-    return False
+# def rate_song(uid, suid, stars):

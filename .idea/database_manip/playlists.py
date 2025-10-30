@@ -7,7 +7,7 @@ def create_playlist(uid):
       if not playlist_name:
         print("Empty playlist name")
         return
-      pid = query(f"INSERT INTO playlist (name) VALUES ('{playlist_name}') RETURNING pid", fetch=True)[0][0]
+      pid = query(f"INSERT INTO playlist (name,uid) VALUES ('{playlist_name}',{uid}) RETURNING pid", fetch=True)[0][0]
       if pid is not None:
         query(f"INSERT INTO createsp VALUES ({uid},{pid})")
         print(f"Playlist {playlist_name} created")
@@ -22,17 +22,17 @@ def create_playlist(uid):
      print("Database error")
      exit
 
-def get_pid(p_name):
+def get_pid(p_name, uid):
   p_name = p_name.strip()
-  result = query(f"SELECT pid FROM playlist WHERE name='{p_name}'", fetch=True)
+  result = query(f"SELECT pid FROM playlist WHERE name='{p_name}' AND uid={uid}", fetch=True)
   if result:
       return result[0][0]
   else:
       return None
 
-def rename_playlist():
+def rename_playlist(uid):
   old_name = input("Enter current name of playlist here: ").strip()
-  pid = get_pid(old_name)
+  pid = get_pid(old_name,uid)
   if not pid:
        print(f"Playlist '{old_name}' does not exist")
        return
@@ -43,25 +43,93 @@ def rename_playlist():
   query(f"UPDATE playlist SET name='{new_name}' WHERE pid={pid}")
   print(f"Playlist '{old_name}' changed to '{new_name}'")
   
-       
+def find_song(name):
+  name = name.strip().replace("'", "''")
+  return query(f"SELECT suid, title, artist FROM song WHERE title ILIKE '%{name}%' ORDER BY title ASC", fetch=True)
 
-def delete_playlist():
+def select_song():
+  name_input = input("Enter song name here: ").strip()
+  results = find_song(name_input)
+  if not results:
+    print("No song with that name")
+    return 
+  if len(results) == 1:
+    return results[0][0]
+  print("Multiple songs found")
+  for idx, s in enumerate(results, start=1):
+    print(f"{idx}. {s[1]} by {s[2]} (ID: {s[0]})")
+  selection = input("Enter number for desired song: ")
+  try:
+      selection = int(selection)
+      if 1 <= selection <= len(results):
+          return results[selection - 1][0]
+      else:
+          print("Invalid selection.")
+          return None
+  except ValueError:
+      print("Please enter a valid number.")
+      return None
+    
+def delete_playlist(uid):
   name = input("Enter name of playlist to be deleted: ").strip()
-  pid = get_pid(name)
+  pid = get_pid(name,uid)
   if not pid:
        print(f"Playlist '{name}' does not exist")
        return
   query(f"DELETE FROM addedto WHERE pid={pid}")
-  query(f"DELETE FROM listensto WHERE pid={pid}")
-  query(f"DELETE FROM playlist WHERE pid={pid}")
   query(f"DELETE FROM createsp WHERE pid={pid}")
+  query(f"DELETE FROM playlist WHERE pid={pid}")
   print("Playlist deleted")
 
-# def add_song_to_playlist(pid, sid):
+def add_song_to_playlist(uid):
+  p_name = input("Enter name of playlist: ").strip()
+  if not p_name:
+    print("Empty playlist name")
+    return
+  pid = get_pid(p_name, uid)
+  if not pid:
+     print(f"Playlist {p_name} does not exist")
+  sid = select_song()
+  if not sid:
+      return
+  query(f"INSERT INTO addedto (pid, suid) VALUES ({pid}, {sid}) ON CONFLICT DO NOTHING;")
+  print("Song added to playlist.")
+  
 
-# def play_playlist(pid, sid, uid):
+# def play_playlist(uid):
 
-# def remove_song_from_playlist(pid, sid):
-
-# def list_user_playlists(uid):
-
+def remove_song_from_playlist(uid):
+  p_name = input("Enter playlist name here: ")
+  if not p_name:
+    print("Empty playlist name")
+    return
+  pid = get_pid(p_name, uid)
+  if not pid:
+    print(f"Playlist {p_name} does not exist")
+    return
+  sid = select_song()
+  if not sid:
+     return
+  query(f"DELETE FROM addedto WHERE pid={pid} AND sid={sid}")
+  print("Song removed from playlist")
+  
+def list_user_playlists(uid):
+  playlists = query(f"""SELECT p.pid, p.name,
+              COUNT(a.suid) AS num_songs,
+              COALESCE(SUM(split_part(s.length, ':', 1)::int * 60 +
+              split_part(s.length, ':', 2)::int), 0) AS total_duration
+              FROM playlist p
+              LEFT JOIN addedto a ON p.pid = a.pid
+              LEFT JOIN song s ON a.suid = s.suid
+              WHERE p.uid = {uid}
+              GROUP BY p.pid, p.name
+              ORDER BY p.name ASC""", fetch=True)
+  if not playlists:
+    print("You have no playlists.")
+    return []
+  print("\nYour Playlists:")
+  for idx, pl in enumerate(playlists, start=1):
+    total_minutes = pl[3] // 60
+    total_duration_remaining_seconds = pl[3] % 60
+    print(f"{idx}. {pl[1]} - {pl[2]} songs, {total_minutes}:{total_duration_remaining_seconds:02d} min")
+  return playlists

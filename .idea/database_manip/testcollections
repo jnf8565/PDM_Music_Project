@@ -1,27 +1,8 @@
-# import unittest
-# from unittest.mock import patch
-from playlists import create_playlist, delete_playlist, rename_playlist, get_pid
-# class TestPlaylistFunctions(unittest.TestCase):
-#     test_uid = 1  # a test user ID in your test DB
+from playlists import create_playlist, delete_playlist, rename_playlist, get_pid, add_song_to_playlist, list_user_playlists
+
+
+if __name__ == "__main__":
+    list_user_playlists(12)
     
-#     def setUp(self):
-#         # Clean up any old test data before each test
-#         from playlists import query
-#         query("DELETE FROM createsp WHERE pid IN (SELECT pid FROM playlist WHERE name='Test Playlist')")
-#         query("DELETE FROM playlist WHERE name='Test Playlist'")
-
-#     @patch('builtins.print')  # suppress printed output in test
-#     @patch('builtins.input', side_effect=['Test Playlist'])
-#     def test_add_and_delete_playlist(self, mock_input, mock_print):
-#         # Create playlist (mock input gives the name automatically)
-#         pid = create_playlist(self.test_uid)
-#         self.assertIsNotNone(pid, "PID should not be None after creation")
-
-#         # Verify playlist exists in DB
-#         fetched_pid = get_pid("Test Playlist")
-#         self.assertEqual(pid, fetched_pid, "PID from DB should match returned PID")
-
-#        # with patch
-
-# #unittest.main()
+    
     
