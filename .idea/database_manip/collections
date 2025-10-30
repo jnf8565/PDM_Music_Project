@@ -8,6 +8,8 @@
 
 # def add_song_to_playlist(pid, sid):
 
+# def play_playlist(pid, sid, uid):
+
 # def remove_song_from_playlist(pid, sid):
 
 # def list_user_playlists(uid):
