@@ -1,9 +1,9 @@
 from datetime import date
 from cursor import query
 
-def valid_email(email) -> bool:
+def valid_email(email: str) -> bool:
     # Handling for improper number or location of @ symbol
-    if email.count('@') != 1:
+    if email.count("@") != 1:
        return False
     at_loc = email.index('@')
     if at_loc == 0 or at_loc == len(email)-1:
@@ -15,77 +15,76 @@ def valid_email(email) -> bool:
     if email.endswith('.'):
        return False
     
-    
-    
     return True
 
 def create_user():
     
     # Handling for email
-    email = input("Please enter the email for the account: ").strip
+    email = input("Please enter the email for the account: ").strip()
     exists = email_exists(email)
     while exists or not email or not valid_email(email):
         if exists:
             print("This email is already in use.")
         else:
             print("Invalid email.")
-        email = input("Please enter the email for the account: ").strip
+        email = input("Please enter the email for the account: ").strip()
         exists = email_exists(email)
     
     # Handling for username
-    username = input("Enter a username for the account: ").strip
+    username = input("Enter a username for the account: ").strip()
     exists = username_exists(username)
     while exists or not username:
         if exists:
             print("This username is already in use.")
         else:
             print("Username cannot be empty.")
-        username = input("Enter a username for the account: ").strip
+        username = input("Enter a username for the account: ").strip()
         exists = username_exists(username)
 
     # Handling for password
-    password = input("Enter a password for the account: ").strip
+    password = input("Enter a password for the account: ").strip()
     while not password:
         print("Password cannot be empty.")
-        password = input("Enter a password for the account: ").strip
+        password = input("Enter a password for the account: ").strip()
 
     # Handling for first name
-    fname = input("Enter your first name: ").strip
+    fname = input("Enter your first name: ").strip()
     while not fname:
         print("First name cannot be empty.")
-        fname = input("Enter your first name: ").strip
+        fname = input("Enter your first name: ").strip()
 
     # Handling for last name
-    lname = input("Enter your last name: ").strip
+    lname = input("Enter your last name: ").strip()
     while not lname:
         print("Last name cannot be empty.")
-        lname = input("Enter your last name: ").strip
+        lname = input("Enter your last name: ").strip()
 
     created_on = date.today()
 
-    query(f"""
+    return query(f"""
         INSERT INTO users (last_access_date, username, password, first_name, last_name, email)
         VALUES ({created_on}, {username}, {password}, {fname}, {lname}, {email})
+        RETURNING uid
         """)
     
 def username_exists(username):
-    count = query(f"""
-                    SELECT COUNT(*)
+    exists = query(f"""
+                    SELECT username
                     FROM users
                     WHERE (username = '{username}')
                     """, True)
-    if count:
+    if exists:
         return True
     else:
         return False
     
 def email_exists(email):
-    count = query(f"""
-                    SELECT COUNT(*)
+    exists = query(f"""
+                    SELECT email
                     FROM users
                     WHERE (email = '{email}')
                     """, True)
-    if count:
+    if exists:
         return True
     else:
         return False
@@ -93,18 +92,18 @@ def email_exists(email):
 def login_user():
     
     # Handling for username
-    username = print("Enter username: ").strip
+    username = print("Enter username: ").strip()
     exists = username_exists(username)
     while not username or not exists:
         if not exists:
             print("No user with this username")
         else:
             print("Username cannot be empty")
-        username = print("Enter username: ").strip
+        username = print("Enter username: ").strip()
         exists = username_exists(username)
     
     # Handling for password
-    password = input("Enter a password for the account: ").strip
+    password = input("Enter a password for the account: ").strip()
     stored_pws = query(f"""
                SELECT password 
                FROM user
@@ -112,7 +111,7 @@ def login_user():
                """, True)
     while password not in stored_pws:
         print("Invalid password")
-        password = print("Enter password: ").strip
+        password = print("Enter password: ").strip()
 
     uid = query(f"""
                 SELECT uid
@@ -126,7 +125,7 @@ def login_user():
 
 
 def search_users_by_email():
-    term = input("Enter search term for email: ").strip
+    term = input("Enter search term for email: ").strip()
     while not term:
         print("Term cannot be empty.")
     
