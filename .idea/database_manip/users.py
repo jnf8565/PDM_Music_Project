@@ -1,9 +1,9 @@
 from datetime import date
 from cursor import query
 
-def valid_email(email) -> bool:
+def valid_email(email: str) -> bool:
     # Handling for improper number or location of @ symbol
-    if email.count('@') != 1:
+    if email.count("@") != 1:
        return False
     at_loc = email.index('@')
     if at_loc == 0 or at_loc == len(email)-1:
@@ -18,6 +18,7 @@ def valid_email(email) -> bool:
     return True
 
 def create_user():
+    
     # Handling for email
     email = input("Please enter the email for the account: ").strip()
     exists = email_exists(email)
@@ -32,7 +33,7 @@ def create_user():
     # Handling for username
     username = input("Enter a username for the account: ").strip()
     exists = username_exists(username)
-    while exists or not username or username == "":
+    while exists or not username:
         if exists:
             print("This username is already in use.")
         else:
@@ -145,8 +146,8 @@ def search_users_by_email():
 
 
 def follow_user(follower_id):
-    username = input("Enter the username of the account to follow: ").strip()
-    followee_id = get_uid(username)
+    email = input("Enter the email of the account to follow: ").strip()
+    followee_id = get_uid(email)
     if not followee_id:
         print("User not found.")
         return
@@ -170,8 +171,8 @@ def follow_user(follower_id):
 
 def unfollow_user(follower_id):
 
-    username = input("Enter the username of the account to unfollow: ").strip()
-    followee_id = query(f"""
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""d
                         SELECT uid
                         FROM users
                         WHERE (username = %s)
@@ -179,7 +180,6 @@ def unfollow_user(follower_id):
     if not followee_id:
         print("User not found.")
         return
-    followee_id = followee_id[0][0]
     
     already_following = query(f"""
                               SELECT COUNT(*)
@@ -199,7 +199,7 @@ def unfollow_user(follower_id):
     print("User unfollowed successfully.")
     
     
-def get_uid(username):
+def get_uid(email):
     return_id = query(f"""
                 SELECT uid
                 FROM users
