@@ -60,7 +60,7 @@ def search_songs():
     return results
 
 def get_song_id(song_identifier):
-    if isinstance(song_identifier, int) or song_identifier.isdigit():
+    if isinstance(song_identifier, int):
         return int(song_identifier)
     
     sql = "SELECT SUID FROM Song WHERE LOWER(Title) = LOWER(%s) LIMIT 1;"
