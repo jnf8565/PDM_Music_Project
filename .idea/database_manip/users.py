@@ -170,3 +170,24 @@ def unfollow_user(follower_id, followee_id):
           DELETE FROM follows
           WHERE (follows = {follower_id} AND followed = {followee_id})
           """)
+    
+    
+def get_uid(uid):
+    return_id = query(f"""f
+                SELECT uid
+                FROM users
+                WHERE (uid = {uid})
+                """)
+    if not return_id:
+        print("User does not exist.")
+    return return_id
+
+
+def delete_user(uid):
+    confirm = input("Are you sure you want to delete this account? yes/no").strip().lower()
+
+    if confirm == "yes":
+        query(f"""f
+              DELETE FROM users
+              WHERE (uid = {uid})
+              """)
