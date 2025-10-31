@@ -61,30 +61,30 @@ def create_user():
 
     created_on = date.today()
 
-    return query(f"""
+    query(f"""
         INSERT INTO users (last_access_date, username, password, first_name, last_name, email)
-        VALUES ({created_on}, {username}, {password}, {fname}, {lname}, {email})
-        RETURNING uid
+        VALUES ('{created_on}', '{username}', '{password}', '{fname}', '{lname}', '{email}')
         """)
+    print(f"created user '{username}'")
     
 def username_exists(username):
-    exists = query(f"""
-                    SELECT username
+    count = query(f"""
+                    SELECT COUNT(*)
                     FROM users
                     WHERE (username = '{username}')
                     """, True)
-    if exists:
+    if count[0][0] > 0:
         return True
     else:
         return False
     
 def email_exists(email):
-    exists = query(f"""
-                    SELECT email
-                    FROM users
-                    WHERE (email = '{email}')
-                    """, True)
-    if exists:
+    count = query(f"""
+                    SELECT COUNT(*) 
+                    FROM users 
+                    WHERE email = '{email}'
+                    """ , True)
+    if count[0][0] > 0:
         return True
     else:
         return False
@@ -109,7 +109,7 @@ def login_user():
                FROM users
                WHERE (username = '{username}')
                """, True)
-    while password not in stored_pws:
+    while password != stored_pws[0][0]:
         print("Invalid password")
         password = input("Enter password: ").strip()
 
@@ -119,7 +119,8 @@ def login_user():
                 WHERE (username = '{username}' AND password = '{password}')
                 """, True)
     if uid:
-        return uid
+        print("Logged in")
+        return uid[0][0]
     else:
         print("No such user exists")
 
@@ -139,24 +140,20 @@ def search_users_by_email():
 
 
 def follow_user(follower_id):
-    
-    username = input("Enter the username of the account to follow: ").strip()
-    followee_id = query(f"""d
-                        SELECT uid
-                        FROM users
-                        WHERE (username = '{username}')
-                        """)
+    email = input("Enter the email of the account to follow: ").strip()
+    followee_id = get_uid(email)
     if not followee_id:
         print("User not found.")
         return
+    followee_id = followee_id[0][0]
     
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follows = {follower_id} AND followed = {followee_id})
-                              """)
-    
-    if already_following:
+                              WHERE (follower = {follower_id} AND followed = {followee_id})
+                              """, True)
+    count = already_following[0][0]
+    if count > 0:
         print("Already following this user.")
         return
     
@@ -180,9 +177,9 @@ def unfollow_user(follower_id):
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follows = {follower_id} AND followed = {followee_id})
-                              """)
-    if already_following == 0:
+                              WHERE (follower = {follower_id} AND followed = {followee_id})
+                              """, True)
+    if already_following[0][0] == 0:
         print("This user was not being followed.")
         return
     elif not already_following:
@@ -190,16 +187,17 @@ def unfollow_user(follower_id):
     
     query(f"""
           DELETE FROM follows
-          WHERE (follows = {follower_id} AND followed = {followee_id})
+          WHERE (follower = {follower_id} AND followed = {followee_id})
           """)
+    print("User unfollowed successfully.")
     
     
-def get_uid(uid):
-    return_id = query(f"""f
+def get_uid(email):
+    return_id = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (uid = {uid})
-                """)
+                WHERE (email = '{email}')
+                """, True)
     if not return_id:
         print("User does not exist.")
     return return_id
@@ -209,7 +207,9 @@ def delete_user(uid):
     confirm = input("Are you sure you want to delete this account? yes/no").strip().lower()
 
     if confirm == "yes":
-        query(f"""f
+        query(f"""
               DELETE FROM users
               WHERE (uid = {uid})
               """)
+    
+    print("Successfully deleted user.")

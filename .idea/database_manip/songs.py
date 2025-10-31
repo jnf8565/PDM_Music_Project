@@ -1,4 +1,4 @@
-from cursor import query
+from database_manip.cursor import query
 from datetime import *
 
 def search_songs():
@@ -111,6 +111,6 @@ def rate_song(uid, song_identifier, stars):
         if query(sql, (suid, uid, stars)):
             print(f"Rated '{song_identifier}' {stars} stars.")
             return True
-
-    print("Error rating song.")
-    return False
+    except Exception:
+        print("Error rating song.")
+        return False
