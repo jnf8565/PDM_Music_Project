@@ -137,7 +137,7 @@ def search_users_by_email():
                    WHERE LOWER(username) LIKE LOWER('{term}')
                    ORDER BY LOWER(username) ASC
                    """, True)
-    print(emails)
+    return emails
 
 
 def follow_user(follower_id):
@@ -162,13 +162,15 @@ def follow_user(follower_id):
           INSERT INTO follows(follower, followed)
           VALUES ({follower_id}, {followee_id})
           """)
-    
-    print("User followed successfully")
 
 def unfollow_user(follower_id):
 
-    username = input("Enter the username of the account to unfollow: ").strip()
-    followee_id = get_uid(username)
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""
+                        SELECT uid
+                        FROM users
+                        WHERE (username = '{username}')
+                        """, True)
     if not followee_id:
         print("User not found.")
         return
@@ -189,14 +191,13 @@ def unfollow_user(follower_id):
           DELETE FROM follows
           WHERE (follower = {follower_id} AND followed = {followee_id})
           """)
-    print("User unfollowed successfully")
     
     
-def get_uid(uid):
+def get_uid(username):
     return_id = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (uid = {uid})
+                WHERE (username = {username})
                 """, True)
     if not return_id:
         print("User does not exist.")
@@ -211,3 +212,5 @@ def delete_user(uid):
               DELETE FROM users
               WHERE (uid = {uid})
               """)
+    
+    print("Successfully deleted user.")
