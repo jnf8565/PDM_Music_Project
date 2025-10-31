@@ -1,4 +1,4 @@
-from cursor import query
+from database_manip.cursor import query
 import psycopg2
 
 def create_playlist(uid):

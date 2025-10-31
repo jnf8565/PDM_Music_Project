@@ -1,5 +1,5 @@
 from datetime import date
-from cursor import query
+from database_manip.cursor import query
 
 def valid_email(email) -> bool:
     # Handling for improper number or location of @ symbol
@@ -121,7 +121,7 @@ def login_user():
                 """, True)
     if uid:
         print("Logged in")
-        return uid
+        return uid[0][0]
     else:
         print("No such user exists")
 
@@ -137,27 +137,24 @@ def search_users_by_email():
                    WHERE LOWER(username) LIKE LOWER('{term}')
                    ORDER BY LOWER(username) ASC
                    """, True)
-    return emails
+    print(emails)
 
 
 def follow_user(follower_id):
-    
     username = input("Enter the username of the account to follow: ").strip()
-    followee_id = query(f"""
-                        SELECT uid
-                        FROM users
-                        WHERE (username = '{username}')
-                        """, True)
+    followee_id = get_uid(username)
     if not followee_id:
         print("User not found.")
         return
+    followee_id = followee_id[0][0]
     
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follower = {follower_id} AND followed = {followee_id[0][0]})
+                              WHERE (follower = {follower_id} AND followed = {followee_id})
                               """, True)
-    if already_following:
+    count = already_following[0][0]
+    if count > 0:
         print("Already following this user.")
         return
     
@@ -165,18 +162,17 @@ def follow_user(follower_id):
           INSERT INTO follows(follower, followed)
           VALUES ({follower_id}, {followee_id})
           """)
+    
+    print("User followed successfully")
 
 def unfollow_user(follower_id):
 
-    username = input("Enter the username of the account to follow: ").strip()
-    followee_id = query(f"""
-                        SELECT uid
-                        FROM users
-                        WHERE (username = '{username}')
-                        """, True)
+    username = input("Enter the username of the account to unfollow: ").strip()
+    followee_id = get_uid(username)
     if not followee_id:
         print("User not found.")
         return
+    followee_id = followee_id[0][0]
     
     already_following = query(f"""
                               SELECT COUNT(*)
@@ -193,6 +189,7 @@ def unfollow_user(follower_id):
           DELETE FROM follows
           WHERE (follower = {follower_id} AND followed = {followee_id})
           """)
+    print("User unfollowed successfully")
     
     
 def get_uid(uid):
@@ -201,7 +198,7 @@ def get_uid(uid):
                 FROM users
                 WHERE (uid = {uid})
                 """, True)
-    if not return_id[0][0]:
+    if not return_id:
         print("User does not exist.")
     return return_id
 

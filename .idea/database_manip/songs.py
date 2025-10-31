@@ -1,4 +1,4 @@
-from cursor import query
+from database_manip.cursor import query
 from datetime import *
 
 def search_songs():
