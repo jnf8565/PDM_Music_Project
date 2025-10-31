@@ -93,24 +93,24 @@ def email_exists(email):
 def login_user():
     
     # Handling for username
-    username = print("Enter username: ").strip
+    username = input("Enter username: ").strip()
     exists = username_exists(username)
     while not username or not exists:
         if not exists:
             print("No user with this username")
         else:
             print("Username cannot be empty")
-        username = print("Enter username: ").strip
+        username = input("Enter username: ").strip()
         exists = username_exists(username)
     
     # Handling for password
     password = input("Enter a password for the account: ").strip()
     stored_pws = query(f"""
                SELECT password 
-               FROM user
+               FROM users
                WHERE (username = '{username}')
                """, True)
-    while password not in stored_pws:
+    while password != stored_pws[0][0]:
         print("Invalid password")
         password = input("Enter password: ").strip()
 
@@ -120,6 +120,7 @@ def login_user():
                 WHERE (username = '{username}' AND password = '{password}')
                 """, True)
     if uid:
+        print("Logged in")
         return uid
     else:
         print("No such user exists")

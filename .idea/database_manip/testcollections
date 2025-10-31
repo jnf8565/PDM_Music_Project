@@ -2,7 +2,7 @@ from playlists import remove_album_from_playlist, add_album_to_playlist, create_
 
 
 if __name__ == "__main__":
-    rename_playlist(12)
+    play_playlist(428)
     
     
     
