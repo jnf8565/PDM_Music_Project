@@ -2,3 +2,4 @@ from users import create_user, login_user, follow_user, search_users_by_email, e
 
 if __name__ == "__main__":
     id = login_user()
+    follow_user(id)

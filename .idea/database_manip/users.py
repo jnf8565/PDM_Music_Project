@@ -134,40 +134,83 @@ def search_users_by_email():
     emails = query(f"""
                    SELECT email
                    FROM users
-                   WHERE LOWER(username) LIKE LOWER('{term}))
+                   WHERE LOWER(username) LIKE LOWER('{term}')
                    ORDER BY LOWER(username) ASC
                    """, True)
     return emails
 
 
-def follow_user(follower_id, followee_id):
+def follow_user(follower_id):
+    
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""
+                        SELECT uid
+                        FROM users
+                        WHERE (username = '{username}')
+                        """, True)
+    if not followee_id:
+        print("User not found.")
+        return
+    
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follows = {follower_id} AND followed = {followee_id})
-                              """)
-    
-    if already_following > 0:
+                              WHERE (follower = {follower_id} AND followed = {followee_id[0][0]})
+                              """, True)
+    if already_following:
         print("Already following this user.")
         return
     
     query(f"""
-          INSERT INTO follows(follows, followed)
+          INSERT INTO follows(follower, followed)
           VALUES ({follower_id}, {followee_id})
           """)
 
-def unfollow_user(follower_id, followee_id):
+def unfollow_user(follower_id):
+
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""
+                        SELECT uid
+                        FROM users
+                        WHERE (username = '{username}')
+                        """, True)
+    if not followee_id:
+        print("User not found.")
+        return
+    
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follows = {follower_id} AND followed = {followee_id})
-                              """)
-    
-    if already_following == 0:
+                              WHERE (follower = {follower_id} AND followed = {followee_id})
+                              """, True)
+    if already_following[0][0] == 0:
         print("This user was not being followed.")
         return
+    elif not already_following:
+        print("Followee does not exist")
     
     query(f"""
           DELETE FROM follows
-          WHERE (follows = {follower_id} AND followed = {followee_id})
+          WHERE (follower = {follower_id} AND followed = {followee_id})
           """)
+    
+    
+def get_uid(uid):
+    return_id = query(f"""
+                SELECT uid
+                FROM users
+                WHERE (uid = {uid})
+                """, True)
+    if not return_id[0][0]:
+        print("User does not exist.")
+    return return_id
+
+
+def delete_user(uid):
+    confirm = input("Are you sure you want to delete this account? yes/no").strip().lower()
+
+    if confirm == "yes":
+        query(f"""
+              DELETE FROM users
+              WHERE (uid = {uid})
+              """)
