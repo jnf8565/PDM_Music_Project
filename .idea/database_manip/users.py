@@ -15,8 +15,6 @@ def valid_email(email) -> bool:
     if email.endswith('.'):
        return False
     
-    
-    
     return True
 
 def create_user():
@@ -119,7 +117,15 @@ def login_user():
                 FROM users
                 WHERE (username = '{username}' AND password = '{password}')
                 """, True)
+    
     if uid:
+        date_accessed = date.today()
+        query(f"""
+              UPDATE users
+              SET last_access_date = {date_accessed}
+              WHERE uid = {uid}
+              """)
+
         print("Logged in")
         return uid[0][0]
     else:
