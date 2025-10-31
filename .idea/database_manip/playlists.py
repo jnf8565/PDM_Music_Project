@@ -242,4 +242,4 @@ def remove_album_from_playlist(uid):
   if not alid:
      return
   query(f"DELETE FROM addedalbumto WHERE pid={pid} AND alid={alid}")
-  print("Song removed from playlist")
+  print("Album removed from playlist")

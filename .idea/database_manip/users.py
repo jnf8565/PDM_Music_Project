@@ -141,8 +141,8 @@ def search_users_by_email():
 
 
 def follow_user(follower_id):
-    username = input("Enter the username of the account to follow: ").strip()
-    followee_id = get_uid(username)
+    email = input("Enter the email of the account to follow: ").strip()
+    followee_id = get_uid(email)
     if not followee_id:
         print("User not found.")
         return
@@ -166,11 +166,11 @@ def follow_user(follower_id):
 
 def unfollow_user(follower_id):
 
-    username = input("Enter the username of the account to unfollow: ").strip()
+    email = input("Enter the email of the account to unfollow: ").strip()
     followee_id = query(f"""
                         SELECT uid
                         FROM users
-                        WHERE (username = '{username}')
+                        WHERE (email = '{email}')
                         """, True)
     if not followee_id:
         print("User not found.")
@@ -195,11 +195,11 @@ def unfollow_user(follower_id):
     print("User unfollowed successfully.")
     
     
-def get_uid(username):
+def get_uid(email):
     return_id = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (username = '{username}')
+                WHERE (email = '{email}')
                 """, True)
     if not return_id:
         print("User does not exist.")
