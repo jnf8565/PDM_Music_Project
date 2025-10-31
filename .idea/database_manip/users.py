@@ -35,7 +35,7 @@ def create_user():
     # Handling for username
     username = input("Enter a username for the account: ").strip
     exists = username_exists(username)
-    while exists or not username or username == "" or count > 0:
+    while exists or not username:
         if exists:
             print("This username is already in use.")
         else:
@@ -72,9 +72,9 @@ def username_exists(username):
     count = query(f"""
                     SELECT COUNT(*)
                     FROM users
-                    WHERE (username = {username})
+                    WHERE (username = '{username}')
                     """, True)
-    if count > 0:
+    if count:
         return True
     else:
         return False
@@ -83,9 +83,9 @@ def email_exists(email):
     count = query(f"""
                     SELECT COUNT(*)
                     FROM users
-                    WHERE (email = {email})
+                    WHERE (email = '{email}')
                     """, True)
-    if count > 0:
+    if count:
         return True
     else:
         return False
@@ -108,7 +108,7 @@ def login_user():
     stored_pws = query(f"""
                SELECT password 
                FROM user
-               WHERE (username = {username})
+               WHERE (username = '{username}')
                """, True)
     while password not in stored_pws:
         print("Invalid password")
@@ -117,7 +117,7 @@ def login_user():
     uid = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (username = {username} AND password = {password})
+                WHERE (username = '{username}' AND password = '{password}')
                 """, True)
     if uid:
         return uid
@@ -146,7 +146,7 @@ def follow_user(follower_id, followee_id):
                               WHERE (follows = {follower_id} AND followed = {followee_id})
                               """)
     
-    if already_following > 0:
+    if already_following:
         print("Already following this user.")
         return
     
@@ -165,6 +165,8 @@ def unfollow_user(follower_id, followee_id):
     if already_following == 0:
         print("This user was not being followed.")
         return
+    elif not already_following:
+        print("Followee does not exist")
     
     query(f"""
           DELETE FROM follows
