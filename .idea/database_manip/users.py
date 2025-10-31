@@ -66,7 +66,7 @@ def create_user():
         INSERT INTO users (last_access_date, username, password, first_name, last_name, email)
         VALUES ('{created_on}', '{username}', '{password}', '{fname}', '{lname}', '{email}')
         """)
-    print(f"created user {username}")
+    print(f"created user '{username}'")
     
 def username_exists(username):
     count = query(f"""
@@ -162,10 +162,11 @@ def follow_user(follower_id):
           INSERT INTO follows(follower, followed)
           VALUES ({follower_id}, {followee_id})
           """)
+    print("User followed successfully.")
 
 def unfollow_user(follower_id):
 
-    username = input("Enter the username of the account to follow: ").strip()
+    username = input("Enter the username of the account to unfollow: ").strip()
     followee_id = query(f"""
                         SELECT uid
                         FROM users
@@ -191,13 +192,14 @@ def unfollow_user(follower_id):
           DELETE FROM follows
           WHERE (follower = {follower_id} AND followed = {followee_id})
           """)
+    print("User unfollowed successfully.")
     
     
 def get_uid(username):
     return_id = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (username = {username})
+                WHERE (username = '{username}')
                 """, True)
     if not return_id:
         print("User does not exist.")

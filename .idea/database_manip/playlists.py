@@ -153,7 +153,7 @@ def remove_song_from_playlist(uid):
   suid = select_song()
   if not suid:
      return
-  query(f"DELETE FROM addedsongto WHERE pid={pid} AND sid={suid}")
+  query(f"DELETE FROM addedsongto WHERE pid={pid} AND suid={suid}")
   print("Song removed from playlist")
   
 def list_user_playlists(uid):
@@ -220,7 +220,7 @@ def add_album_to_playlist(uid):
   if not alid:
       return
   query(f"INSERT INTO addedalbumto (pid, alid) VALUES ({pid}, {alid}) ON CONFLICT DO NOTHING;")
-  print("Song added to playlist.")
+  print("Album added to playlist.")
 
 def remove_album_from_playlist(uid):
   p_name = input("Enter playlist name here: ")
