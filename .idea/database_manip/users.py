@@ -1,9 +1,9 @@
 from datetime import date
-from database_manip.cursor import query
+from cursor import query
 
-def valid_email(email) -> bool:
+def valid_email(email: str) -> bool:
     # Handling for improper number or location of @ symbol
-    if email.count('@') != 1:
+    if email.count("@") != 1:
        return False
     at_loc = email.index('@')
     if at_loc == 0 or at_loc == len(email)-1:
@@ -15,11 +15,10 @@ def valid_email(email) -> bool:
     if email.endswith('.'):
        return False
     
-    
-    
     return True
 
 def create_user():
+    
     # Handling for email
     email = input("Please enter the email for the account: ").strip()
     exists = email_exists(email)
@@ -34,7 +33,7 @@ def create_user():
     # Handling for username
     username = input("Enter a username for the account: ").strip()
     exists = username_exists(username)
-    while exists or not username or username == "":
+    while exists or not username:
         if exists:
             print("This username is already in use.")
         else:
@@ -134,7 +133,7 @@ def search_users_by_email():
     emails = query(f"""
                    SELECT email
                    FROM users
-                   WHERE LOWER(username) LIKE LOWER('{term}')
+                   WHERE LOWER(username) LIKE LOWER({term}))
                    ORDER BY LOWER(username) ASC
                    """, True)
     return emails
@@ -159,23 +158,21 @@ def follow_user(follower_id):
         return
     
     query(f"""
-          INSERT INTO follows(follower, followed)
+          INSERT INTO follows(follows, followed)
           VALUES ({follower_id}, {followee_id})
           """)
-    print("User followed successfully.")
 
 def unfollow_user(follower_id):
 
-    email = input("Enter the email of the account to unfollow: ").strip()
-    followee_id = query(f"""
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""d
                         SELECT uid
                         FROM users
-                        WHERE (email = '{email}')
-                        """, True)
+                        WHERE (username = '{username}')
+                        """)
     if not followee_id:
         print("User not found.")
         return
-    followee_id = followee_id[0][0]
     
     already_following = query(f"""
                               SELECT COUNT(*)
