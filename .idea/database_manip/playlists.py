@@ -31,17 +31,20 @@ def get_pid(p_name, uid):
       return None
 
 def rename_playlist(uid):
-  old_name = input("Enter current name of playlist here: ").strip()
-  pid = get_pid(old_name,uid)
-  if not pid:
-       print(f"Playlist '{old_name}' does not exist")
-       return
-  new_name = input("Enter new name of playlist here: ").strip()
-  if not new_name:
-       print("Empty playlist name")
-       return
-  query(f"UPDATE playlist SET name='{new_name}' WHERE pid={pid}")
-  print(f"Playlist '{old_name}' changed to '{new_name}'")
+  try:
+    old_name = input("Enter current name of playlist here: ").strip()
+    pid = get_pid(old_name,uid)
+    if not pid:
+          print(f"Playlist '{old_name}' does not exist")
+          return
+    new_name = input("Enter new name of playlist here: ").strip()
+    if not new_name:
+          print("Empty playlist name")
+          return
+    query(f"UPDATE playlist SET name='{new_name}' WHERE pid={pid}")
+    print(f"Playlist '{old_name}' changed to '{new_name}'")
+  except Exception:
+     print("Playlist with that name already exists")
   
 def find_song(name):
   name = name.strip().replace("'", "''")
