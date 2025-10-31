@@ -1,5 +1,5 @@
 from datetime import date
-from database_manip.cursor import query
+from cursor import query
 
 def valid_email(email) -> bool:
     # Handling for improper number or location of @ symbol
@@ -58,20 +58,18 @@ def create_user():
         print("Last name cannot be empty.")
         lname = input("Enter your last name: ").strip()
 
-    created_on = date.today()
-
     query(f"""
         INSERT INTO users (last_access_date, username, password, first_name, last_name, email)
-        VALUES ('{created_on}', '{username}', '{password}', '{fname}', '{lname}', '{email}')
-        """)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (date.today(), username, password, fname, lname, email))
     print(f"created user '{username}'")
     
 def username_exists(username):
     count = query(f"""
                     SELECT COUNT(*)
                     FROM users
-                    WHERE (username = '{username}')
-                    """, True)
+                    WHERE (username = ?)
+                    """, (username), True)
     if count[0][0] > 0:
         return True
     else:
@@ -81,8 +79,8 @@ def email_exists(email):
     count = query(f"""
                     SELECT COUNT(*) 
                     FROM users 
-                    WHERE email = '{email}'
-                    """ , True)
+                    WHERE email = (?)
+                    """, (email), True)
     if count[0][0] > 0:
         return True
     else:
@@ -106,8 +104,8 @@ def login_user():
     stored_pws = query(f"""
                SELECT password 
                FROM users
-               WHERE (username = '{username}')
-               """, True)
+               WHERE (username = ?)
+               """, (username), True)
     while password != stored_pws[0][0]:
         print("Invalid password")
         password = input("Enter password: ").strip()
@@ -115,16 +113,16 @@ def login_user():
     uid = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (username = '{username}' AND password = '{password}')
-                """, True)
+                WHERE (username = ? AND password = ?)
+                """, (username, password), True)
     
     if uid:
         date_accessed = date.today()
         query(f"""
               UPDATE users
-              SET last_access_date = {date_accessed}
-              WHERE uid = {uid}
-              """)
+              SET last_access_date = ?
+              WHERE uid = ?
+              """, (date_accessed, uid))
 
         print("Logged in")
         return uid[0][0]
@@ -140,9 +138,9 @@ def search_users_by_email():
     emails = query(f"""
                    SELECT email
                    FROM users
-                   WHERE LOWER(username) LIKE LOWER('{term}')
+                   WHERE LOWER(username) LIKE LOWER(?)
                    ORDER BY LOWER(username) ASC
-                   """, True)
+                   """, (term), True)
     return emails
 
 
@@ -157,8 +155,8 @@ def follow_user(follower_id):
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follower = {follower_id} AND followed = {followee_id})
-                              """, True)
+                              WHERE (follower = ? AND followed = ?)
+                              """, (follower_id, followee_id), True)
     count = already_following[0][0]
     if count > 0:
         print("Already following this user.")
@@ -166,8 +164,8 @@ def follow_user(follower_id):
     
     query(f"""
           INSERT INTO follows(follower, followed)
-          VALUES ({follower_id}, {followee_id})
-          """)
+          VALUES (?, ?)
+          """, (follower_id, followee_id))
     print("User followed successfully.")
 
 def unfollow_user(follower_id):
@@ -176,8 +174,8 @@ def unfollow_user(follower_id):
     followee_id = query(f"""
                         SELECT uid
                         FROM users
-                        WHERE (username = '{username}')
-                        """, True)
+                        WHERE (username = ?)
+                        """, (username), True)
     if not followee_id:
         print("User not found.")
         return
@@ -186,8 +184,8 @@ def unfollow_user(follower_id):
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
-                              WHERE (follower = {follower_id} AND followed = {followee_id})
-                              """, True)
+                              WHERE (follower = ? AND followed = ?)
+                              """, (follower_id, followee_id), True)
     if already_following[0][0] == 0:
         print("This user was not being followed.")
         return
@@ -196,8 +194,8 @@ def unfollow_user(follower_id):
     
     query(f"""
           DELETE FROM follows
-          WHERE (follower = {follower_id} AND followed = {followee_id})
-          """)
+          WHERE (follower = ? AND followed = ?)
+          """, (follower_id, followee_id))
     print("User unfollowed successfully.")
     
     
@@ -205,8 +203,8 @@ def get_uid(username):
     return_id = query(f"""
                 SELECT uid
                 FROM users
-                WHERE (username = '{username}')
-                """, True)
+                WHERE (username = ?)
+                """, (username), True)
     if not return_id:
         print("User does not exist.")
     return return_id
@@ -218,7 +216,7 @@ def delete_user(uid):
     if confirm == "yes":
         query(f"""
               DELETE FROM users
-              WHERE (uid = {uid})
-              """)
+              WHERE (uid = ?)
+              """, (uid))
     
     print("Successfully deleted user.")
