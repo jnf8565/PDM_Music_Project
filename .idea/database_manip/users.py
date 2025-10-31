@@ -172,7 +172,7 @@ def unfollow_user(follower_id):
                         SELECT uid
                         FROM users
                         WHERE (username = '{username}')
-                        """)
+                        """, True)
     if not followee_id:
         print("User not found.")
         return
@@ -181,7 +181,7 @@ def unfollow_user(follower_id):
                               SELECT COUNT(*)
                               FROM follows
                               WHERE (follows = {follower_id} AND followed = {followee_id})
-                              """)
+                              """, True)
     if already_following == 0:
         print("This user was not being followed.")
         return
