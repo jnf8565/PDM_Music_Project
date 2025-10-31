@@ -92,14 +92,14 @@ def email_exists(email):
 def login_user():
     
     # Handling for username
-    username = print("Enter username: ").strip()
+    username = input("Enter username: ").strip()
     exists = username_exists(username)
     while not username or not exists:
         if not exists:
             print("No user with this username")
         else:
             print("Username cannot be empty")
-        username = print("Enter username: ").strip()
+        username = input("Enter username: ").strip()
         exists = username_exists(username)
     
     # Handling for password
@@ -111,7 +111,7 @@ def login_user():
                """, True)
     while password not in stored_pws:
         print("Invalid password")
-        password = print("Enter password: ").strip()
+        password = input("Enter password: ").strip()
 
     uid = query(f"""
                 SELECT uid
@@ -138,7 +138,18 @@ def search_users_by_email():
     return emails
 
 
-def follow_user(follower_id, followee_id):
+def follow_user(follower_id):
+    
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""d
+                        SELECT uid
+                        FROM users
+                        WHERE (username = '{username}')
+                        """)
+    if not followee_id:
+        print("User not found.")
+        return
+    
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
@@ -154,13 +165,23 @@ def follow_user(follower_id, followee_id):
           VALUES ({follower_id}, {followee_id})
           """)
 
-def unfollow_user(follower_id, followee_id):
+def unfollow_user(follower_id):
+
+    username = input("Enter the username of the account to follow: ").strip()
+    followee_id = query(f"""d
+                        SELECT uid
+                        FROM users
+                        WHERE (username = '{username}')
+                        """)
+    if not followee_id:
+        print("User not found.")
+        return
+    
     already_following = query(f"""
                               SELECT COUNT(*)
                               FROM follows
                               WHERE (follows = {follower_id} AND followed = {followee_id})
                               """)
-    
     if already_following == 0:
         print("This user was not being followed.")
         return
