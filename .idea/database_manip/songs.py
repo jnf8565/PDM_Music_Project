@@ -59,49 +59,57 @@ def search_songs():
     print(f"Search results for '{term}':\n")
     return results
 
+def get_song_id(song_identifier):
+    if isinstance(song_identifier, int) or song_identifier.isdigit():
+        return int(song_identifier)
+    
+    sql = "SELECT SUID FROM Song WHERE LOWER(Title) = LOWER(%s) LIMIT 1;"
+    result = query(sql, (song_identifier,), fetch=True)
+    return result[0][0] if result else None
 
-def song_played(uid, suid):
+
+def song_played(uid, song_identifier):
+    suid = get_song_id(song_identifier)
+    if not suid:
+        print("Error: Song not found.")
+        return False
+
     now = datetime.now()
-
-    results = query(f"""
+    sql = """
         INSERT INTO ListensTo (SUID, UID, StartTime, EndTime)
-        VALUES ('{suid}', '{uid}', '{now}', '{now}');
-    """)
-
-    if results:
-        print(f"Recorded play of song {suid}.")
+        VALUES (%s, %s, %s, %s);
+    """
+    
+    if query(sql, (suid, uid, now, now)):
+        print(f"Recorded play of song '{song_identifier}'.")
         return True
     else:
         print("Error recording song play.")
         return False
 
 
-def rate_song(uid, suid, stars):
+def rate_song(uid, song_identifier, stars):
     if stars < 1 or stars > 5:
         print("Error: Rating must be between 1 and 5.")
         return False
 
-    existing = query(f"""
-        SELECT * FROM Rates
-        WHERE SUID = '{suid}' AND UID = '{uid}';
-    """, fetch=True)
+    suid = get_song_id(song_identifier)
+    if not suid:
+        print("Error: Song not found.")
+        return False
+
+    check_sql = "SELECT * FROM Rates WHERE SUID = %s AND UID = %s;"
+    existing = query(check_sql, (suid, uid), fetch=True)
 
     if existing:
-        results = query(f"""
-            UPDATE Rates
-            SET Stars = {stars}
-            WHERE SUID = '{suid}' AND UID = '{uid}';
-        """)
-        if results:
-            print(f"Updated rating to {stars} stars.")
+        sql = "UPDATE Rates SET Stars = %s WHERE SUID = %s AND UID = %s;"
+        if query(sql, (stars, suid, uid)):
+            print(f"Updated rating for '{song_identifier}' to {stars} stars.")
             return True
     else:
-        results = query(f"""
-            INSERT INTO Rates (SUID, UID, Stars)
-            VALUES ('{suid}', '{uid}', {stars});
-        """)
-        if results:
-            print(f"Rated song {stars} stars.")
+        sql = "INSERT INTO Rates (SUID, UID, Stars) VALUES (%s, %s, %s);"
+        if query(sql, (suid, uid, stars)):
+            print(f"Rated '{song_identifier}' {stars} stars.")
             return True
 
     print("Error rating song.")
