@@ -106,7 +106,7 @@ def login_user():
     password = input("Enter a password for the account: ").strip()
     stored_pws = query(f"""
                SELECT password 
-               FROM user
+               FROM users
                WHERE (username = '{username}')
                """, True)
     while password not in stored_pws:
