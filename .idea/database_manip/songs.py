@@ -1,4 +1,4 @@
-from cursor import query
+from database_manip.cursor import query
 from datetime import *
 
 def search_songs():
@@ -60,7 +60,7 @@ def search_songs():
     return results
 
 def get_song_id(song_identifier):
-    if isinstance(song_identifier, int) or song_identifier.isdigit():
+    if isinstance(song_identifier, int):
         return int(song_identifier)
     
     sql = "SELECT SUID FROM Song WHERE LOWER(Title) = LOWER(%s) LIMIT 1;"
@@ -111,6 +111,6 @@ def rate_song(uid, song_identifier, stars):
         if query(sql, (suid, uid, stars)):
             print(f"Rated '{song_identifier}' {stars} stars.")
             return True
-
+        
     print("Error rating song.")
     return False
