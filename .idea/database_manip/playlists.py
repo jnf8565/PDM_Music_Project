@@ -96,7 +96,7 @@ def add_song_to_playlist(uid):
     return
   pid = get_pid(p_name, uid)
   if not pid:
-     print(f"Playlist {p_name} does not exist")
+     print(f"Playlist '{p_name}' does not exist")
   suid = select_song()
   if not suid:
       return
@@ -220,6 +220,16 @@ def add_album_to_playlist(uid):
   if not alid:
       return
   query(f"INSERT INTO addedalbumto (pid, alid) VALUES ({pid}, {alid}) ON CONFLICT DO NOTHING;")
+  songs = query(f"SELECT suid FROM containsas WHERE alid = {alid};", fetch=True)
+  if not songs:
+      print("No songs found in that album.")
+      return
+  
+  # 3️⃣ Add each song to playlist
+  for (suid,) in songs:
+      query(f"INSERT INTO addedsongto (pid, suid) VALUES ({pid}, {suid}) ON CONFLICT DO NOTHING;")
+
+  print(f"Album (ALID {alid}) and its {len(songs)} songs added to playlist '{p_name}'.")
   print("Album added to playlist.")
 
 def remove_album_from_playlist(uid):

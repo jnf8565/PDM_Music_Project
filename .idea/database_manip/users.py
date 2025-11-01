@@ -120,6 +120,12 @@ def login_user():
                 WHERE (username = '{username}' AND password = '{password}')
                 """, True)
     if uid:
+        date_accessed = date.today()
+        query(f"""
+              UPDATE users
+              SET last_access_date = '{date_accessed}'
+              WHERE uid = {uid[0][0]}
+              """)
         print("Logged in")
         return uid[0][0]
     else:
