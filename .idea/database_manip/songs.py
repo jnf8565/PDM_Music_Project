@@ -63,8 +63,9 @@ def get_song_id(song_identifier):
     if isinstance(song_identifier, int) or song_identifier.isdigit():
         return int(song_identifier)
     
-    sql = f"SELECT SUID FROM Song WHERE LOWER(Title) LIKE LOWER('%{song_identifier}%') LIMIT 1;"
-    result = query(sql, fetch=True)
+    result = (f"""SELECT SUID FROM Song 
+              WHERE LOWER(Title) LIKE LOWER('%{song_identifier}%') LIMIT 1;
+              """, True)
     return result[0][0] if result else None
 
 
