@@ -51,7 +51,7 @@ def search_songs():
            OR LOWER(g.Name)  LIKE LOWER('%{term}%')
         GROUP BY s.SUID, s.Title, a.Name, al.Title, s.Length, s.ReleaseDate, g.Name
         ORDER BY {order_clause};
-    """, fetch=True)
+    """, True)
 
     if not results:
         print("No songs found under inputted search term")
