@@ -135,7 +135,7 @@ def song_played(uid, song_identifier):
         suid, title, artist, album = songs[0]
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    result = (f"""
+    result = query(f"""
         INSERT INTO ListensTo (suid, uid, starttime)
         VALUES ({suid}, {uid}, '{now}') RETURNING starttime;
         """)
@@ -192,8 +192,7 @@ def rate_song(uid, song_identifier):
     check_sql = f"SELECT stars FROM rates WHERE suid = {suid} AND uid = {uid};"
     existing = query(check_sql, fetch=True)
     if existing:
-        sql = f"UPDATE rates SET stars = {stars} WHERE suid = {suid} AND uid = {uid};"
-        query(sql)
+        query(f"UPDATE rates SET stars = {stars} WHERE suid = {suid} AND uid = {uid};")
         print(f"Updated rating for '{title}' by {artist} to {stars} stars.")
     else:
         query(f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});")
