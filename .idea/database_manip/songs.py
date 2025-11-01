@@ -46,7 +46,7 @@ def search_songs():
            OR LOWER(a.Name) LIKE LOWER('{like_term}')
            OR LOWER(al.Title) LIKE LOWER('{like_term}')
            OR LOWER(g.Name) LIKE LOWER('{like_term}');
-    """)
+    """, True)
 
     if not song_ids:
         print("No songs found under inputted search term.")
@@ -135,11 +135,10 @@ def song_played(uid, song_identifier):
         suid, title, artist, album = songs[0]
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sql = f"""
+    result = (f"""
         INSERT INTO ListensTo (suid, uid, starttime)
         VALUES ({suid}, {uid}, '{now}') RETURNING starttime;
-    """
-    result = query(sql, fetch=True)
+        """)
 
     if result:
         print(f"Recorded play of '{title}' by {artist}.")
@@ -197,8 +196,7 @@ def rate_song(uid, song_identifier):
         query(sql)
         print(f"Updated rating for '{title}' by {artist} to {stars} stars.")
     else:
-        sql = f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});"
-        query(sql)
+        query(f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});")
         print(f"Rated '{title}' by {artist} {stars} stars.")
 
     return True
