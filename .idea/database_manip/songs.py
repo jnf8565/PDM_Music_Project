@@ -2,10 +2,10 @@ from database_manip.cursor import query
 from datetime import *
 
 def search_songs():
-    term = input("Enter search term for song, artist, album, or genre: ").strip()
+    term = input("Enter search term for song, artist, album, or genre: ").strip().lower()
     while not term:
         print("Search term cannot be empty.")
-        term = input("Enter search term for song, artist, album, or genre: ").strip()
+        term = input("Enter search term for song, artist, album, or genre: ").strip().lower()
 
     sort_by_options = ["song", "artist", "album", "genre", "year", "default"]
     sort_by = input(f"Sort by ({'/'.join(sort_by_options)}), default is 'song': ").strip().lower()
@@ -51,7 +51,7 @@ def search_songs():
            OR LOWER(g.Name)  LIKE LOWER('%{term}%')
         GROUP BY s.SUID, s.Title, a.Name, al.Title, s.Length, s.ReleaseDate, g.Name
         ORDER BY {order_clause};
-    """, fetch=True)
+    """, True)
 
     if not results:
         print("No songs found under inputted search term")
