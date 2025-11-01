@@ -1,8 +1,8 @@
-from users import create_user, login_user, follow_user, unfollow_user, search_users_by_email, get_uid
-from playlists import (create_playlist, list_user_playlists, add_song_to_playlist, 
+from database_manip.users import create_user, login_user, follow_user, unfollow_user, search_users_by_email, get_uid
+from database_manip.playlists import (create_playlist, list_user_playlists, add_song_to_playlist, 
                          remove_song_from_playlist, rename_playlist, slime_playlist, 
                          play_playlist, add_album_to_playlist, remove_album_from_playlist)
-from songs import search_songs, rate_song, song_played
+from database_manip.songs import search_songs, rate_song, song_played
 
 def main():
     print("Music App Database")
@@ -61,12 +61,8 @@ def main():
         elif choice == "3":
             # Rate song
             song_identifier = input("Enter song ID or song title: ").strip()
-            try:
-                stars = int(input("Stars (1-5): ").strip())
-                rate_song(uid, song_identifier, stars)
-            except ValueError:
-                print("Invalid rating. Must be a number.")
-                
+            rate_song(uid, song_identifier)
+               
         elif choice == "4":
             # View playlists
             list_user_playlists(uid)
@@ -108,26 +104,10 @@ def main():
             search_users_by_email()
             
         elif choice == "14":
-            # Follow user
-            followee_uid = input("Enter User ID to follow: ").strip()
-            try:
-                followee_uid = int(followee_uid)
-                # Verify user exists
-                if get_uid(followee_uid):
-                    follow_user(uid, followee_uid)
-                else:
-                    print("User does not exist.")
-            except ValueError:
-                print("Invalid User ID. Must be a number.")
+            follow_user(uid)
             
         elif choice == "15":
-            # Unfollow user
-            followee_uid = input("Enter User ID to unfollow: ").strip()
-            try:
-                followee_uid = int(followee_uid)
-                unfollow_user(uid, followee_uid)
-            except ValueError:
-                print("Invalid User ID. Must be a number.")
+            unfollow_user(uid)
             
         elif choice == "0":
             print("Logging out. Goodbye!")

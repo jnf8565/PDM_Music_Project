@@ -29,13 +29,17 @@ def query(sql_query, fetch=False):
                 'port' : tunnel.local_bind_port
             }
             connection = pg2.connect(**params)
-            connection.autocommit = True
             cursor = connection.cursor()
+            cursor.execute("SET max_parallel_workers_per_gather = 0")
+            cursor.execute("SET enable_parallel_hash = off")
+            cursor.execute("SET enable_parallel_append = off")
+            cursor.execute("SET force_parallel_mode = off")
             cursor.execute(sql_query)
             if fetch:
                 result = cursor.fetchall()
             else:
                 result = None
+            connection.commit()
             cursor.close()
             connection.close()
             return result
