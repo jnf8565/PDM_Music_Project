@@ -1,4 +1,5 @@
 from database_manip.cursor import query
+from database_manip.playlists import find_song, select_song
 from datetime import *
 
 def search_songs():
@@ -28,8 +29,7 @@ def search_songs():
             "year": "s.ReleaseDate"
         }
         sort_col = sort_map.get(sort_by.lower(), "s.Title")
-        order_clause = f"{sort_col} {order.upper()}, a.Name {order.upper()}"
-
+        order_clause = f"{sort_col} {order.upper()}, a.Name {order.upper()}"     
     results = query(f"""
         SELECT s.SUID,
                s.Title AS Song,
@@ -57,7 +57,7 @@ def search_songs():
         print("No songs found under inputted search term")
         return []
     print(f"Search results for '{term}':\n")
-    return results
+    print(results)
 
 def get_song_id(song_identifier):
     if isinstance(song_identifier, int) or song_identifier.isdigit():
@@ -69,50 +69,105 @@ def get_song_id(song_identifier):
 
 
 def song_played(uid, song_identifier):
-    suid = get_song_id(song_identifier)
-    if not suid:
-        print("Error: Song not found.")
+    songs = query(f"""
+        SELECT s.suid, s.title, a.name AS artist, al.title AS album
+        FROM song s
+        JOIN createss cs ON s.suid = cs.suid
+        JOIN artist a ON cs.aruid = a.aruid
+        LEFT JOIN containsas ca ON s.suid = ca.suid
+        LEFT JOIN album al ON ca.alid = al.alid
+        WHERE LOWER(s.title) LIKE LOWER('%{song_identifier}%')
+        ORDER BY s.title ASC;
+    """, fetch=True)
+
+    if not songs:
+        print(f"No songs found matching '{song_identifier}'.")
         return False
 
-    now = datetime.now()
+    if len(songs) > 1:
+        print(f"\nMultiple songs found for '{song_identifier}':")
+        for i, (suid, title, artist, album) in enumerate(songs, start=1):
+            album_display = album if album else "No Album"
+            print(f"{i}. {title} — {artist} ({album_display})")
+
+        try:
+            choice = int(input("Enter the number of the song to play: ").strip())
+            if not (1 <= choice <= len(songs)):
+                print("Invalid selection.")
+                return False
+        except ValueError:
+            print("Please enter a valid number.")
+            return False
+
+        suid, title, artist, album = songs[choice - 1]
+    else:
+        suid, title, artist, album = songs[0]
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sql = f"""
-        INSERT INTO ListensTo (SUID, UID, StartTime)
+        INSERT INTO ListensTo (suid, uid, starttime)
         VALUES ({suid}, {uid}, '{now}') RETURNING starttime;
     """
-    result = query(sql, True)
-    if result and len(result) > 0:
-        starttime = result[0][0]
+    result = query(sql, fetch=True)
 
-    if abs((starttime - now).total_seconds()) < 1:
-        print(f"Recorded play of song '{song_identifier}'.")
+    if result:
+        print(f"Recorded play of '{title}' by {artist}.")
         return True
     else:
         print("Error recording song play.")
         return False
 
 
-def rate_song(uid, song_identifier, stars):
-    if stars < 1 or stars > 5:
-        print("Error: Rating must be between 1 and 5.")
-        return False
+def rate_song(uid, song_identifier):
+    songs = query(f"""
+        SELECT s.suid, s.title, a.name AS artist, al.title AS album
+        FROM song s
+        JOIN createss cs ON s.suid = cs.suid
+        JOIN artist a ON cs.aruid = a.aruid
+        LEFT JOIN containsas ca ON s.suid = ca.suid
+        LEFT JOIN album al ON ca.alid = al.alid
+        WHERE LOWER(s.title) LIKE LOWER('%{song_identifier}%')
+        ORDER BY s.title ASC;
+    """, fetch=True)
 
-    suid = get_song_id(song_identifier)
-    if not suid:
-        print("Error: Song not found.")
+    if not songs:
+        print(f"No songs found matching '{song_identifier}'.")
         return False
-    try: 
-        check_sql = f"SELECT * FROM Rates WHERE SUID = {suid}  AND UID ={uid};"
-        existing = query(check_sql, fetch=True)
-        if existing:
-            sql = f"UPDATE Rates SET Stars = {stars} WHERE SUID = {suid} AND UID = {uid};"
-            query(sql)
-            print(f"Updated rating for '{song_identifier}' to {stars} stars.")
-            return True
-        else:
-            sql = f"INSERT INTO Rates (SUID, UID, Stars) VALUES ({suid},{uid},{stars});"
-            query(sql)
-            print(f"Rated '{song_identifier}' {stars} stars.")
-            return True
-    except Exception:
-        print("Error rating song.")
+    if len(songs) > 1:
+        print(f"\nMultiple songs found for '{song_identifier}':")
+        for i, (suid, title, artist, album) in enumerate(songs, start=1):
+            album_display = album if album else "No Album"
+            print(f"{i}. {title} — {artist} ({album_display})")
+
+        try:
+            selection = int(input("Enter the number of the song to rate: ").strip())
+            if not (1 <= selection <= len(songs)):
+                print("Invalid selection.")
+                return False
+        except ValueError:
+            print("Please enter a valid number.")
+            return False
+        suid, title, artist, album = songs[selection - 1]
+
+    else:
+        suid, title, artist, album = songs[0]
+    try:
+        stars = int(input(f"Enter your rating for '{title}' by {artist} (1–5): ").strip())
+        if stars < 1 or stars > 5:
+            print("Error: Rating must be between 1 and 5.")
+            return False
+    except ValueError:
+        print("Error: Please enter a valid number between 1 and 5.")
         return False
+    check_sql = f"SELECT stars FROM rates WHERE suid = {suid} AND uid = {uid};"
+    existing = query(check_sql, fetch=True)
+    if existing:
+        sql = f"UPDATE rates SET stars = {stars} WHERE suid = {suid} AND uid = {uid};"
+        query(sql)
+        print(f"Updated rating for '{title}' by {artist} to {stars} stars.")
+    else:
+        sql = f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});"
+        query(sql)
+        print(f"Rated '{title}' by {artist} {stars} stars.")
+
+    return True

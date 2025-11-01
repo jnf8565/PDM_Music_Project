@@ -62,13 +62,9 @@ def main():
         elif choice == "3" or choice == "3.":
             # Rate song
             song_identifier = input("Enter song ID or song title: ").strip()
-            try:
-                stars = int(input("Stars (1-5): ").strip())
-                rate_song(uid, song_identifier, stars)
-            except ValueError:
-                print("Invalid rating. Must be a number.")
-                
-        elif choice == "4" or choice == "4.":
+            rate_song(uid, song_identifier)
+               
+        elif choice == "4":
             # View playlists
             list_user_playlists(uid)
             
@@ -108,19 +104,11 @@ def main():
             # Search users by email
             search_users_by_email()
             
-        elif choice == "14" or choice == "14.":
-            # Follow user
+        elif choice == "14":
             follow_user(uid)
             
-        elif choice == "15" or choice == "15.":
-            # Unfollow user
+        elif choice == "15":
             unfollow_user(uid)
-        
-        elif choice == "16" or choice == "16.":
-            # Delete account
-            slime_user(uid)
-            print("Goodbye!")
-            break
             
         elif choice == "0" or choice == "0.":
             print("Logging out. Goodbye!")
