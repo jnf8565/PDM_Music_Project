@@ -19,23 +19,52 @@ def search_songs():
         print("Invalid order, defaulting to 'asc'.")
         order = "asc"
 
-    if sort_by == "default":
-        order_clause = "s.Title ASC, a.Name ASC"
-    else:
-        sort_map = {
-            "song": "s.Title",
-            "artist": "a.Name",
-            "genre": "g.Name",
-            "year": "s.ReleaseDate"
-        }
-        sort_col = sort_map.get(sort_by.lower(), "s.Title")
-        order_clause = f"{sort_col} {order.upper()}, a.Name {order.upper()}"     
+    sort_map = {
+        "song": "s.Title",
+        "artist": "a.Name",
+        "album": "al.Title",
+        "genre": "g.Name",
+        "year": "s.ReleaseDate"
+    }
+    sort_col = sort_map.get(sort_by, "s.Title")
+
+    # Escape single quotes in term
+    safe_term = term.replace("'", "''")
+    like_term = f"%{safe_term}%"
+
+    # STEP 1 — Find matching song IDs
+    song_ids = query(f"""
+        SELECT DISTINCT s.SUID
+        FROM Song s
+        LEFT JOIN CreatesS cs ON s.SUID = cs.SUID
+        LEFT JOIN Artist a ON cs.ARUID = a.ARUID
+        LEFT JOIN ContainsAS ca ON s.SUID = ca.SUID
+        LEFT JOIN Album al ON ca.ALID = al.ALID
+        LEFT JOIN IsASG ig ON s.SUID = ig.SUID
+        LEFT JOIN Genre g ON ig.GID = g.GID
+        WHERE LOWER(s.Title) LIKE LOWER('{like_term}')
+           OR LOWER(a.Name) LIKE LOWER('{like_term}')
+           OR LOWER(al.Title) LIKE LOWER('{like_term}')
+           OR LOWER(g.Name) LIKE LOWER('{like_term}');
+    """)
+
+    if not song_ids:
+        print("No songs found under inputted search term.")
+        return []
+
+    # Extract SUIDs and create IN clause
+    song_ids_list = [str(row[0]) for row in song_ids]
+    placeholders = ",".join(song_ids_list)
+
+    # STEP 2 — Fetch detailed info
     results = query(f"""
-        SELECT s.SUID,
+        SELECT DISTINCT s.SUID,
                s.Title AS Song,
-               a.Name  AS Artist,
+               a.Name AS Artist,
                al.Title AS Album,
+               g.Name AS Genre,
                s.Length,
+               s.ReleaseDate,
                COUNT(l.UID) AS ListenCount
         FROM Song s
         JOIN CreatesS cs ON s.SUID = cs.SUID
@@ -45,19 +74,20 @@ def search_songs():
         LEFT JOIN ListensTo l ON s.SUID = l.SUID
         LEFT JOIN IsASG ig ON s.SUID = ig.SUID
         LEFT JOIN Genre g ON ig.GID = g.GID
-        WHERE LOWER(s.Title) LIKE LOWER('%{term}%')
-           OR LOWER(a.Name)  LIKE LOWER('%{term}%')
-           OR LOWER(al.Title) LIKE LOWER('%{term}%')
-           OR LOWER(g.Name)  LIKE LOWER('%{term}%')
-        GROUP BY s.SUID, s.Title, a.Name, al.Title, s.Length, s.ReleaseDate, g.Name
-        ORDER BY {order_clause};
+        WHERE s.SUID IN ({placeholders})
+        GROUP BY s.SUID, s.Title, a.Name, al.Title, g.Name, s.Length, s.ReleaseDate
+        ORDER BY {sort_col} {order.upper()}, a.Name {order.upper()};
     """, True)
 
     if not results:
-        print("No songs found under inputted search term")
+        print("No detailed song info found.")
         return []
-    print(f"Search results for '{term}':\n")
-    print(results)
+
+    print(f"\nSearch results for '{term}':\n")
+    for result in results:
+        print("ID: " + str(result[0]) + ", Song Name: \"" + str(result[1]) + "\", Artist: " + str(result[2]) +", Album Name: \"" + result[3] + "\"")
+
+
 
 def get_song_id(song_identifier):
     if isinstance(song_identifier, int) or song_identifier.isdigit():
