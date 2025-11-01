@@ -119,6 +119,8 @@ def main():
         elif choice == "16" or choice == "16.":
             # Delete account
             slime_user(uid)
+            print("Goodbye!")
+            break
             
         elif choice == "0" or choice == "0.":
             print("Logging out. Goodbye!")

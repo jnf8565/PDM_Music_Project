@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from database_manip.cursor import query
 
 def valid_email(email: str) -> bool:
@@ -66,8 +66,8 @@ def create_user():
 
     created_at = date.today().strftime("%m/%d/%Y")
     query(f"""
-        INSERT INTO users (last_access_date, username, password, first_name, last_name, email, date_created)
-        VALUES ('{created_at}', '{username}', '{password}', '{fname}', '{lname}', '{email}', '{created_at}')
+        INSERT INTO users (last_access_date, username, password, first_name, last_name, email, date_time_created)
+        VALUES ('{created_at}', '{username}', '{password}', '{fname}', '{lname}', '{email}', '{datetime.now().replace(microsecond=0).strftime("%m/%d/%Y")}')
         """)
     uid = query(f"""
                 SELECT uid
@@ -147,7 +147,7 @@ def login_user():
         
         query(f"""
               UPDATE users
-              SET last_access_date = {date_accessed}
+              SET last_access_date = '{date_accessed}'
               WHERE uid = {uid}
               """)
 
