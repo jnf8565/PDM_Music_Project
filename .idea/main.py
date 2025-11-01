@@ -1,6 +1,6 @@
 from database_manip.users import create_user, login_user, follow_user, unfollow_user, search_users_by_email, slime_user
 from database_manip.playlists import (create_playlist, list_user_playlists, add_song_to_playlist, 
-                         remove_song_from_playlist, rename_playlist, slime_playlist, 
+                         remove_song_from_playlist, rename_playlist, slime_playlist, slime_all_playlists,
                          play_playlist, add_album_to_playlist, remove_album_from_playlist)
 from database_manip.songs import search_songs, rate_song, song_played
 
@@ -109,8 +109,18 @@ def main():
             
         elif choice == "15":
             unfollow_user(uid)
+        
+        elif choice == "16" or choice == "16.":
+            # Delete account
+            #createsp, follows, playlist, users
+            slime_all_playlists(uid)
+
+            slime_user(uid)
+            print("Goodbye!")
+            break
             
         elif choice == "0" or choice == "0.":
+
             print("Logging out. Goodbye!")
             break
             
