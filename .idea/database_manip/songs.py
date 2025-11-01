@@ -32,7 +32,7 @@ def search_songs():
     like_term = f"%{safe_term}%"
 
     # STEP 1 — Find matching song IDs
-    song_search_sql = f"""
+    song_ids = query(f"""
         SELECT DISTINCT s.SUID
         FROM Song s
         LEFT JOIN CreatesS cs ON s.SUID = cs.SUID
@@ -45,9 +45,7 @@ def search_songs():
            OR LOWER(a.Name) LIKE LOWER('{like_term}')
            OR LOWER(al.Title) LIKE LOWER('{like_term}')
            OR LOWER(g.Name) LIKE LOWER('{like_term}');
-    """
-
-    song_ids = query(song_search_sql, True)
+    """)
 
     if not song_ids:
         print("No songs found under inputted search term.")
@@ -86,7 +84,7 @@ def search_songs():
 
     print(f"\nSearch results for '{term}':\n")
     for result in results:
-        print("ID: " + str(result[0]) + ", Song Name: \"" + str(result[1]) + "\", Artist: " + str(result[2]))
+        print("ID: " + str(result[0]) + ", Song Name: \"" + str(result[1]) + "\", Artist: " + str(result[2]) +", Album Name: \"" + result[3] + "\"")
 
 
 

@@ -23,8 +23,8 @@ def create_playlist(uid):
      exit
 
 def get_pid(p_name, uid):
-  p_name = p_name.strip()
-  result = query(f"SELECT pid FROM playlist WHERE name='{p_name}' AND uid={uid}", fetch=True)
+  p_name = p_name.lower().strip()
+  result = query(f"SELECT pid FROM playlist WHERE LOWER(name)='{p_name}' AND uid={uid}", fetch=True)
   if result:
       return result[0][0]
   else:
@@ -32,7 +32,7 @@ def get_pid(p_name, uid):
 
 def rename_playlist(uid):
   try:
-    old_name = input("Enter current name of playlist here: ").strip()
+    old_name = input("Enter current name of playlist here: ").lower().strip()
     pid = get_pid(old_name,uid)
     if not pid:
           print(f"Playlist '{old_name}' does not exist")
@@ -48,7 +48,9 @@ def rename_playlist(uid):
   
 def find_song(name):
   name = name.strip().replace("'", "''")
-  return query(f"SELECT suid, title, artist FROM song WHERE title ILIKE '%{name}%' ORDER BY title ASC", fetch=True)
+  return query(f"""SELECT suid, title, artist 
+               FROM song WHERE title ILIKE '%{name}%' 
+               ORDER BY title ASC""", fetch=True)
 
 def select_song():
   name_input = input("Enter song name here: ").strip()
@@ -60,10 +62,11 @@ def select_song():
       return results[0][0]
   print("Multiple songs found")
   index = 1
-  for album in results:
-      album_id = album[0]     # The album’s ID
-      album_title = album[1]  # The album’s title
-      print(f"{index}. {album_title} (ID: {album_id})")
+  for song in results:
+      song_id = song[0]     # The song's ID
+      song_title = song[1]  # The song’s title
+      artist = song[2]      # The artist of the song
+      print(f"{index}. {song_title} by {artist} (ID: {song_id})")
       index += 1
   selection = input("Enter number for desired song: ")
   try:
@@ -89,6 +92,21 @@ def slime_playlist(uid):
   query(f"DELETE FROM playlist WHERE pid={pid}")
   print("Playlist deleted")
 
+def slime_all_playlists(uid):
+  print("Deleting Playlists...")
+  playlists = list_user_playlists(uid)
+
+  if not playlists:
+     print("No playlists to delete.")
+     return
+  
+  for playlist in playlists:
+    pid = playlist[0]
+    query(f"DELETE FROM addedsongto WHERE pid={pid}")
+    query(f"DELETE FROM addedalbumto WHERE pid={pid}")
+    query(f"DELETE FROM createsp WHERE pid={pid}")
+    query(f"DELETE FROM playlist WHERE pid={pid}")
+
 def add_song_to_playlist(uid):
   p_name = input("Enter name of playlist: ").strip()
   if not p_name:
@@ -97,6 +115,7 @@ def add_song_to_playlist(uid):
   pid = get_pid(p_name, uid)
   if not pid:
      print(f"Playlist {p_name} does not exist")
+     return
   suid = select_song()
   if not suid:
       return
