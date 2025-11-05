@@ -1,5 +1,4 @@
 from database_manip.cursor import query
-from database_manip.playlists import find_song, select_song
 from datetime import *
 
 def search_songs():
@@ -46,7 +45,7 @@ def search_songs():
            OR LOWER(a.Name) LIKE LOWER('{like_term}')
            OR LOWER(al.Title) LIKE LOWER('{like_term}')
            OR LOWER(g.Name) LIKE LOWER('{like_term}');
-    """)
+    """, True)
 
     if not song_ids:
         print("No songs found under inputted search term.")

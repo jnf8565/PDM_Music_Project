@@ -41,10 +41,9 @@ def main():
 10. Add album to playlist
 11. Remove album from playlist
 12. Play entire playlist
-13. Search users by email
-14. Follow user
-15. Unfollow user
-16. Delete account
+13. Follow user
+14. Unfollow user
+15. Delete account
 0.  Logout
         """)
         
@@ -99,18 +98,14 @@ def main():
         elif choice == "12" or choice == "12.":
             # Play playlist
             play_playlist(uid)
-            
+        
         elif choice == "13" or choice == "13.":
-            # Search users by email
-            search_users_by_email()
-            
-        elif choice == "14":
             follow_user(uid)
             
-        elif choice == "15":
+        elif choice == "14" or choice == "14.":
             unfollow_user(uid)
         
-        elif choice == "16" or choice == "16.":
+        elif choice == "15" or choice == "16.":
             # Delete account
             #createsp, follows, playlist, users
             slime_all_playlists(uid)

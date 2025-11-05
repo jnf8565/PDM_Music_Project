@@ -7,6 +7,7 @@ def create_playlist(uid):
       if not playlist_name:
         print("Empty playlist name")
         return
+      safe_name = playlist_name.replace("'", "''")
       pid = query(f"INSERT INTO playlist (name,uid) VALUES ('{playlist_name}',{uid}) RETURNING pid", fetch=True)[0][0]
       if pid is not None:
         query(f"INSERT INTO createsp VALUES ({uid},{pid})")
@@ -264,6 +265,7 @@ def add_album_to_playlist(uid):
     print(f"Playlist {p_name} does not exist")
     return
   alid = select_album()
+  album_name = query(f"SELECT title FROM album WHERE alid= {alid}", True)[0][0]
   if not alid:
       return
   query(f"INSERT INTO addedalbumto (pid, alid) VALUES ({pid}, {alid}) ON CONFLICT DO NOTHING;")
@@ -274,7 +276,7 @@ def add_album_to_playlist(uid):
   for (suid,) in songs:
       query(f"INSERT INTO addedsongto (pid, suid) VALUES ({pid}, {suid}) ON CONFLICT DO NOTHING;")
 
-  print(f"Album (ALID {alid}) and its {len(songs)} songs added to playlist '{p_name}'.")
+  print(f"Album {album_name} and its {len(songs)} songs added to playlist '{p_name}'.")
   print("Album added to playlist.")
 
 def remove_album_from_playlist(uid):
