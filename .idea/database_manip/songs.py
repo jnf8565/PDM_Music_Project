@@ -92,8 +92,9 @@ def get_song_id(song_identifier):
     if isinstance(song_identifier, int) or song_identifier.isdigit():
         return int(song_identifier)
     
-    sql = f"SELECT SUID FROM Song WHERE LOWER(Title) LIKE LOWER('%{song_identifier}%') LIMIT 1;"
-    result = query(sql, fetch=True)
+    result = (f"""SELECT SUID FROM Song 
+              WHERE LOWER(Title) LIKE LOWER('%{song_identifier}%') LIMIT 1;
+              """, True)
     return result[0][0] if result else None
 
 
@@ -133,11 +134,10 @@ def song_played(uid, song_identifier):
         suid, title, artist, album = songs[0]
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sql = f"""
+    result = query(f"""
         INSERT INTO ListensTo (suid, uid, starttime)
         VALUES ({suid}, {uid}, '{now}') RETURNING starttime;
-    """
-    result = query(sql, fetch=True)
+        """)
 
     if result:
         print(f"Recorded play of '{title}' by {artist}.")
@@ -191,11 +191,9 @@ def rate_song(uid, song_identifier):
     check_sql = f"SELECT stars FROM rates WHERE suid = {suid} AND uid = {uid};"
     existing = query(check_sql, fetch=True)
     if existing:
-        sql = f"UPDATE rates SET stars = {stars} WHERE suid = {suid} AND uid = {uid};"
-        query(sql)
+        query(f"UPDATE rates SET stars = {stars} WHERE suid = {suid} AND uid = {uid};")
         print(f"Updated rating for '{title}' by {artist} to {stars} stars.")
     else:
-        sql = f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});"
-        query(sql)
+        query(f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});")
         print(f"Rated '{title}' by {artist} {stars} stars.")
     return True
