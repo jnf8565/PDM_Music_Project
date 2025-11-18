@@ -30,7 +30,10 @@ def query(sql_query, vars=(), fetch=False):
             }
             connection = pg2.connect(**params)
             cursor = connection.cursor()
-            cursor.execute(sql_query, vars)
+            if vars:
+                cursor.execute(sql_query, vars)
+            else:
+                cursor.execute(sql_query)
             if fetch:
                 result = cursor.fetchall()
             else:

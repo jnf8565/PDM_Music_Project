@@ -32,7 +32,7 @@ def search_songs():
     like_term = f"%{safe_term}%"
 
     # STEP 1 — Find matching song IDs
-    song_ids = query("""
+    song_ids = query(f"""
         SELECT DISTINCT s.SUID
         FROM Song s
         LEFT JOIN CreatesS cs ON s.SUID = cs.SUID
@@ -41,11 +41,11 @@ def search_songs():
         LEFT JOIN Album al ON ca.ALID = al.ALID
         LEFT JOIN IsASG ig ON s.SUID = ig.SUID
         LEFT JOIN Genre g ON ig.GID = g.GID
-        WHERE LOWER(s.Title) LIKE LOWER(%s)
-           OR LOWER(a.Name) LIKE LOWER(%s)
-           OR LOWER(al.Title) LIKE LOWER(%s)
-           OR LOWER(g.Name) LIKE LOWER(%s);
-    """, (like_term, like_term, like_term, like_term), True)
+        WHERE LOWER(s.Title) LIKE LOWER('{like_term}')
+           OR LOWER(a.Name) LIKE LOWER('{like_term}')
+           OR LOWER(al.Title) LIKE LOWER('{like_term}')
+           OR LOWER(g.Name) LIKE LOWER('{like_term}');
+    """, (), True)
 
     if not song_ids:
         print("No songs found under inputted search term.")
@@ -92,23 +92,23 @@ def get_song_id(song_identifier):
     if isinstance(song_identifier, int) or song_identifier.isdigit():
         return int(song_identifier)
     
-    result = ("""SELECT SUID FROM Song 
-              WHERE LOWER(Title) LIKE LOWER(%s) LIMIT 1;
-              """, (f"%{song_identifier}%"), True)
+    result = (f"""SELECT SUID FROM Song 
+              WHERE LOWER(Title) LIKE LOWER('%{song_identifier}%') LIMIT 1;
+              """, (), True)
     return result[0][0] if result else None
 
 
 def song_played(uid, song_identifier):
-    songs = query("""
+    songs = query(f"""
         SELECT s.suid, s.title, a.name AS artist, al.title AS album
         FROM song s
         JOIN createss cs ON s.suid = cs.suid
         JOIN artist a ON cs.aruid = a.aruid
         LEFT JOIN containsas ca ON s.suid = ca.suid
         LEFT JOIN album al ON ca.alid = al.alid
-        WHERE LOWER(s.title) LIKE LOWER(%s)
+        WHERE LOWER(s.title) LIKE LOWER('%{song_identifier}%')
         ORDER BY s.title ASC;
-    """, (f"%{song_identifier}%",), fetch=True)
+    """, (), fetch=True)
 
     if not songs:
         print(f"No songs found matching '{song_identifier}'.")
@@ -134,10 +134,10 @@ def song_played(uid, song_identifier):
         suid, title, artist, album = songs[0]
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    result = query("""
+    result = query(f"""
         INSERT INTO ListensTo (suid, uid, starttime)
-        VALUES (%s, %s, %s) RETURNING starttime;
-        """, (suid, uid, now))
+        VALUES ({suid}, {uid}, '{now}') RETURNING starttime;
+        """, (), True)
 
     if result:
         print(f"Recorded play of '{title}' by {artist}.")
@@ -148,16 +148,16 @@ def song_played(uid, song_identifier):
 
 
 def rate_song(uid, song_identifier):
-    songs = query("""
+    songs = query(f"""
         SELECT s.suid, s.title, a.name AS artist, al.title AS album
         FROM song s
         JOIN createss cs ON s.suid = cs.suid
         JOIN artist a ON cs.aruid = a.aruid
         LEFT JOIN containsas ca ON s.suid = ca.suid
         LEFT JOIN album al ON ca.alid = al.alid
-        WHERE LOWER(s.title) LIKE LOWER(%s)
+        WHERE LOWER(s.title) LIKE LOWER('%{song_identifier}%')
         ORDER BY s.title ASC;
-    """, (f"%{song_identifier}%",), fetch=True)
+    """, (), fetch=True)
 
     if not songs:
         print(f"No songs found matching '{song_identifier}'.")
@@ -188,13 +188,12 @@ def rate_song(uid, song_identifier):
     except ValueError:
         print("Error: Please enter a valid number between 1 and 5.")
         return False
-    existing = query("SELECT stars FROM rates WHERE suid = %s AND uid = %s;", 
-                     (suid, uid),
-                     fetch=True)
+    check_sql = f"SELECT stars FROM rates WHERE suid = {suid} AND uid = {uid};"
+    existing = query(check_sql, (), fetch=True)
     if existing:
-        query("UPDATE rates SET stars = %s WHERE suid = %s AND uid = %s;", (stars, suid, uid))
+        query(f"UPDATE rates SET stars = {stars} WHERE suid = {suid} AND uid = {uid};")
         print(f"Updated rating for '{title}' by {artist} to {stars} stars.")
     else:
-        query("INSERT INTO rates (suid, uid, stars) VALUES (%s, %s, %s);", (suid, uid, stars))
+        query(f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});")
         print(f"Rated '{title}' by {artist} {stars} stars.")
     return True
