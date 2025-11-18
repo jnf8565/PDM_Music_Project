@@ -160,7 +160,6 @@ def play_playlist(uid):
    
 
 def remove_song_from_playlist(uid):
-    # Step 1: Choose playlist
     p_name = input("Enter playlist name here: ").strip()
     if not p_name:
         print("Empty playlist name.")
@@ -185,8 +184,6 @@ def remove_song_from_playlist(uid):
     if not songs:
         print(f"Playlist '{p_name}' has no songs.")
         return
-
-    # Step 3: Let user pick which song to remove
     print(f"\nSongs in playlist '{p_name}':")
     for i, (suid, title, artist) in enumerate(songs, start=1):
         print(f"{i}. {title} — {artist}")
@@ -201,8 +198,6 @@ def remove_song_from_playlist(uid):
         return
 
     suid, title, artist = songs[selection - 1]
-
-    # Step 4: Confirm deletion
     confirm = input(f"Remove '{title}' by {artist} from '{p_name}'? (y/n): ").strip().lower()
     if confirm != "y":
         print("Canceled.")
@@ -273,6 +268,7 @@ def add_album_to_playlist(uid):
     print(f"Playlist {p_name} does not exist")
     return
   alid = select_album()
+  album_name = query(f"SELECT title FROM album WHERE alid= {alid}", True)[0][0]
   if not alid:
       return
   query("INSERT INTO addedalbumto (pid, alid) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (pid, alid))
@@ -280,16 +276,13 @@ def add_album_to_playlist(uid):
   if not songs:
       print("No songs found in that album.")
       return
-  
-  # 3️⃣ Add each song to playlist
   for (suid,) in songs:
       query("INSERT INTO addedsongto (pid, suid) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (pid, suid))
 
-  print(f"Album (ALID {alid}) and its {len(songs)} songs added to playlist '{p_name}'.")
+  print(f"Album {album_name} and its {len(songs)} songs added to playlist '{p_name}'.")
   print("Album added to playlist.")
 
 def remove_album_from_playlist(uid):
-    # Step 1: Get playlist name
     p_name = input("Enter playlist name here: ").strip()
     if not p_name:
         print("Empty playlist name.")
@@ -312,8 +305,6 @@ def remove_album_from_playlist(uid):
     if not albums:
         print(f"No albums found in playlist '{p_name}'.")
         return
-
-    # Step 3: Let the user pick which album to remove
     if len(albums) == 1:
         alid, alname = albums[0]
         confirm = input(f"Remove '{alname}' from '{p_name}'? (y/n): ").strip().lower()
@@ -335,8 +326,6 @@ def remove_album_from_playlist(uid):
         except ValueError:
             print("Please enter a valid number.")
             return
-
-    # Step 4: Verify album is actually in playlist
     in_playlist = query(
         "SELECT 1 FROM addedalbumto WHERE pid = %s AND alid = %s;",
         (pid, alid),
