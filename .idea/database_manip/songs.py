@@ -56,7 +56,7 @@ def search_songs():
     placeholders = ",".join(song_ids_list)
 
     # STEP 2 — Fetch detailed info
-    results = query("""
+    results = query(f"""
         SELECT DISTINCT s.SUID,
                s.Title AS Song,
                a.Name AS Artist,
@@ -73,10 +73,10 @@ def search_songs():
         LEFT JOIN ListensTo l ON s.SUID = l.SUID
         LEFT JOIN IsASG ig ON s.SUID = ig.SUID
         LEFT JOIN Genre g ON ig.GID = g.GID
-        WHERE s.SUID IN (%s)
+        WHERE s.SUID IN ({placeholders})
         GROUP BY s.SUID, s.Title, a.Name, al.Title, g.Name, s.Length, s.ReleaseDate
-        ORDER BY %s {order.upper()}, a.Name {order.upper()};
-    """, (placeholders, sort_col), True)
+        ORDER BY {sort_col} {order.upper()}, a.Name {order.upper()};
+    """, (), True)
 
     if not results:
         print("No detailed song info found.")
@@ -92,9 +92,9 @@ def get_song_id(song_identifier):
     if isinstance(song_identifier, int) or song_identifier.isdigit():
         return int(song_identifier)
     
-    result = (f"""SELECT SUID FROM Song 
-              WHERE LOWER(Title) LIKE LOWER('%{song_identifier}%') LIMIT 1;
-              """, True)
+    result = ("""SELECT SUID FROM Song 
+              WHERE LOWER(Title) LIKE LOWER(%s) LIMIT 1;
+              """, (f"%{song_identifier}%"), True)
     return result[0][0] if result else None
 
 
