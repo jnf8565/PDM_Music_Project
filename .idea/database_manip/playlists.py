@@ -7,10 +7,9 @@ def create_playlist(uid):
       if not playlist_name:
         print("Empty playlist name")
         return
-      safe_name = playlist_name.replace("'", "''")
-      pid = query(f"INSERT INTO playlist (name,uid) VALUES ('{playlist_name}',{uid}) RETURNING pid", fetch=True)[0][0]
+      pid = query("INSERT INTO playlist (name,uid) VALUES (%s, %s) RETURNING pid", (playlist_name, uid), fetch=True)[0][0]
       if pid is not None:
-        query(f"INSERT INTO createsp VALUES ({uid},{pid})")
+        query("INSERT INTO createsp VALUES (%s, %s)", (uid, pid))
         print(f"Playlist {playlist_name} created")
         return
       else:
@@ -25,7 +24,7 @@ def create_playlist(uid):
 
 def get_pid(p_name, uid):
   p_name = p_name.lower().strip()
-  result = query(f"SELECT pid FROM playlist WHERE LOWER(name)='{p_name}' AND uid={uid}", fetch=True)
+  result = query("SELECT pid FROM playlist WHERE LOWER(name)=%s AND uid=%s", (p_name, uid), fetch=True)
   if result:
       return result[0][0]
   else:
@@ -42,16 +41,16 @@ def rename_playlist(uid):
     if not new_name:
           print("Empty playlist name")
           return
-    query(f"UPDATE playlist SET name='{new_name}' WHERE pid={pid}")
+    query("UPDATE playlist SET name=%s WHERE pid=%s", (new_name, pid))
     print(f"Playlist '{old_name}' changed to '{new_name}'")
   except Exception:
      print("Playlist with that name already exists")
   
 def find_song(name):
   name = name.strip().replace("'", "''")
-  return query(f"""SELECT suid, title, artist 
-               FROM song WHERE title ILIKE '%{name}%' 
-               ORDER BY title ASC""", fetch=True)
+  return query("""SELECT suid, title, artist 
+               FROM song WHERE title ILIKE %s 
+               ORDER BY title ASC""", (f"%{name}%",), fetch=True)
 
 def select_song():
   name_input = input("Enter song name here: ").strip()
@@ -87,10 +86,10 @@ def slime_playlist(uid):
   if not pid:
        print(f"Playlist '{name}' does not exist")
        return
-  query(f"DELETE FROM addedsongto WHERE pid={pid}")
-  query(f"DELETE FROM addedalbumto WHERE pid={pid}")
-  query(f"DELETE FROM createsp WHERE pid={pid}")
-  query(f"DELETE FROM playlist WHERE pid={pid}")
+  query("DELETE FROM addedsongto WHERE pid=%s", (pid,))
+  query("DELETE FROM addedalbumto WHERE pid=%s", (pid,))
+  query("DELETE FROM createsp WHERE pid=%s", (pid,))
+  query("DELETE FROM playlist WHERE pid=%s", (pid,))
   print("Playlist deleted")
 
 def slime_all_playlists(uid):
@@ -103,10 +102,10 @@ def slime_all_playlists(uid):
   
   for playlist in playlists:
     pid = playlist[0]
-    query(f"DELETE FROM addedsongto WHERE pid={pid}")
-    query(f"DELETE FROM addedalbumto WHERE pid={pid}")
-    query(f"DELETE FROM createsp WHERE pid={pid}")
-    query(f"DELETE FROM playlist WHERE pid={pid}")
+    query("DELETE FROM addedsongto WHERE pid=%s", (pid,))
+    query("DELETE FROM addedalbumto WHERE pid=%s", (pid,))
+    query("DELETE FROM createsp WHERE pid=%s", (pid,))
+    query("DELETE FROM playlist WHERE pid=%s", (pid,))
 
 def add_song_to_playlist(uid):
   p_name = input("Enter name of playlist: ").strip()
@@ -119,7 +118,7 @@ def add_song_to_playlist(uid):
   suid = select_song()
   if not suid:
       return
-  query(f"INSERT INTO addedsongto (pid, suid) VALUES ({pid}, {suid}) ON CONFLICT DO NOTHING;")
+  query("INSERT INTO addedsongto (pid, suid) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (pid, suid))
   print("Song added to playlist.")
   
 def play_playlist(uid):
@@ -138,13 +137,13 @@ def play_playlist(uid):
   except Exception:
       print("Please enter a valid number.")
       return
-  songs = query(f"""
+  songs = query("""
         SELECT s.suid, s.title, s.artist
         FROM addedsongto a
         JOIN song s ON a.suid = s.suid
-        WHERE a.pid = {pid}
+        WHERE a.pid = %s
         ORDER BY s.title ASC;
-    """, fetch=True)
+    """, (pid,), fetch=True)
   if not songs:
      print("Empty playlist")
      return
@@ -152,11 +151,11 @@ def play_playlist(uid):
   for s in songs:
       suid, title, artist = s
       print(f"Now playing: {title} by {artist}")
-      query(f"""
+      query("""
           INSERT INTO listensto (uid, suid, starttime)
-          VALUES ({uid}, {suid}, NOW())
+          VALUES (%s, %s, NOW())
           ON CONFLICT DO NOTHING;
-      """)
+      """, (uid, suid))
   print("Finished playing playlist.")
    
 
@@ -170,15 +169,17 @@ def remove_song_from_playlist(uid):
     if not pid:
         print(f"Playlist '{p_name}' does not exist.")
         return
-    songs = query(f"""
+
+    # Step 2: Get all songs currently in the playlist
+    songs = query("""
         SELECT s.suid, s.title, a.name AS artist
         FROM addedsongto ad
         JOIN song s ON ad.suid = s.suid
         JOIN createss cs ON s.suid = cs.suid
         JOIN artist a ON cs.aruid = a.aruid
-        WHERE ad.pid = {pid}
+        WHERE ad.pid = %s
         ORDER BY s.title ASC;
-    """, fetch=True)
+    """, (pid,), fetch=True)
 
     if not songs:
         print(f"Playlist '{p_name}' has no songs.")
@@ -201,20 +202,22 @@ def remove_song_from_playlist(uid):
     if confirm != "y":
         print("Canceled.")
         return
-    query(f"DELETE FROM addedsongto WHERE pid = {pid} AND suid = {suid};")
+
+    # Step 5: Delete from addedsongto
+    query("DELETE FROM addedsongto WHERE pid = %s AND suid = %s;", (pid, suid))
     print(f"Removed '{title}' by {artist} from playlist '{p_name}'.")
   
 def list_user_playlists(uid):
-  playlists = query(f"""SELECT p.pid, p.name,
+  playlists = query("""SELECT p.pid, p.name,
               COUNT(a.suid) AS num_songs,
               COALESCE(SUM(split_part(s.length, ':', 1)::int * 60 +
               split_part(s.length, ':', 2)::int), 0) AS total_duration
               FROM playlist p
               LEFT JOIN addedsongto a ON p.pid = a.pid
               LEFT JOIN song s ON a.suid = s.suid
-              WHERE p.uid = {uid}
+              WHERE p.uid = %s
               GROUP BY p.pid, p.name
-              ORDER BY p.name ASC""", fetch=True)
+              ORDER BY p.name ASC""", (uid,), fetch=True)
   if not playlists:
     print("You have no playlists.")
     return []
@@ -227,7 +230,7 @@ def list_user_playlists(uid):
 
 def find_album(name):
   name = name.strip().replace("'", "''")
-  return query(f"SELECT alid, title FROM album WHERE title ILIKE '%{name}%' ORDER BY title ASC", fetch=True)
+  return query("SELECT alid, title FROM album WHERE title ILIKE %s ORDER BY title ASC", (f"%{name}%",), fetch=True)
 
 def select_album():
   name_input = input("Enter album name here: ").strip()
@@ -268,13 +271,13 @@ def add_album_to_playlist(uid):
   album_name = query(f"SELECT title FROM album WHERE alid= {alid}", True)[0][0]
   if not alid:
       return
-  query(f"INSERT INTO addedalbumto (pid, alid) VALUES ({pid}, {alid}) ON CONFLICT DO NOTHING;")
-  songs = query(f"SELECT suid FROM containsas WHERE alid = {alid};", fetch=True)
+  query("INSERT INTO addedalbumto (pid, alid) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (pid, alid))
+  songs = query("SELECT suid FROM containsas WHERE alid = %s;", (alid,), fetch=True)
   if not songs:
       print("No songs found in that album.")
       return
   for (suid,) in songs:
-      query(f"INSERT INTO addedsongto (pid, suid) VALUES ({pid}, {suid}) ON CONFLICT DO NOTHING;")
+      query("INSERT INTO addedsongto (pid, suid) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (pid, suid))
 
   print(f"Album {album_name} and its {len(songs)} songs added to playlist '{p_name}'.")
   print("Album added to playlist.")
@@ -289,13 +292,15 @@ def remove_album_from_playlist(uid):
     if not pid:
         print(f"Playlist '{p_name}' does not exist.")
         return
-    albums = query(f"""
+
+    # Step 2: Get all albums currently in this playlist
+    albums = query("""
         SELECT aa.alid, al.title
         FROM addedalbumto aa
         JOIN album al ON aa.alid = al.alid
-        WHERE aa.pid = {pid}
+        WHERE aa.pid = %s
         ORDER BY al.title ASC;
-    """, fetch=True)
+    """, (pid,), fetch=True)
 
     if not albums:
         print(f"No albums found in playlist '{p_name}'.")
@@ -322,18 +327,23 @@ def remove_album_from_playlist(uid):
             print("Please enter a valid number.")
             return
     in_playlist = query(
-        f"SELECT 1 FROM addedalbumto WHERE pid = {pid} AND alid = {alid};",
+        "SELECT 1 FROM addedalbumto WHERE pid = %s AND alid = %s;",
+        (pid, alid),
         fetch=True
     )
     if not in_playlist:
         print(f"Album '{alname}' is not in this playlist.")
         return
-    query(f"DELETE FROM addedalbumto WHERE pid = {pid} AND alid = {alid};")
 
-    query(f"""
+    # Step 5: Remove the album record
+    query("DELETE FROM addedalbumto WHERE pid = %s AND alid = %s;", (pid, alid))
+
+    # Step 6: Remove all songs from this album from the playlist
+    query("""
         DELETE FROM addedsongto
-        WHERE pid = {pid}
-          AND suid IN (SELECT suid FROM containsas WHERE alid = {alid});
-    """)
+        WHERE pid = %s
+          AND suid IN (SELECT suid FROM containsas WHERE alid = %s);
+    """, (pid, alid))
+
     print(f"Removed album '{alname}' and all its songs from playlist '{p_name}'.")
   
