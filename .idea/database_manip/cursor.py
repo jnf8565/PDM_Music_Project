@@ -7,7 +7,7 @@ from sshtunnel import SSHTunnelForwarder
 load_dotenv()
 
 
-def query(sql_query, fetch=False):
+def query(sql_query, vars=(), fetch=False):
     db_name = os.getenv("DB_NAME")
     username = os.getenv("DB_USER")
     password = os.getenv("DB_PASS")
@@ -30,11 +30,7 @@ def query(sql_query, fetch=False):
             }
             connection = pg2.connect(**params)
             cursor = connection.cursor()
-            cursor.execute("SET max_parallel_workers_per_gather = 0")
-            cursor.execute("SET enable_parallel_hash = off")
-            cursor.execute("SET enable_parallel_append = off")
-            cursor.execute("SET force_parallel_mode = off")
-            cursor.execute(sql_query)
+            cursor.execute(sql_query, vars)
             if fetch:
                 result = cursor.fetchall()
             else:
