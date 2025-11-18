@@ -1,5 +1,4 @@
 from database_manip.cursor import query
-from database_manip.playlists import find_song, select_song
 from datetime import *
 
 def search_songs():
@@ -197,5 +196,4 @@ def rate_song(uid, song_identifier):
     else:
         query(f"INSERT INTO rates (suid, uid, stars) VALUES ({suid}, {uid}, {stars});")
         print(f"Rated '{title}' by {artist} {stars} stars.")
-
     return True
