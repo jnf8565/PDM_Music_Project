@@ -268,7 +268,7 @@ def add_album_to_playlist(uid):
     print(f"Playlist {p_name} does not exist")
     return
   alid = select_album()
-  album_name = query(f"SELECT title FROM album WHERE alid= {alid}", True)[0][0]
+  album_name = query(f"SELECT title FROM album WHERE alid= {alid}", (), True)[0][0]
   if not alid:
       return
   query("INSERT INTO addedalbumto (pid, alid) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (pid, alid))
