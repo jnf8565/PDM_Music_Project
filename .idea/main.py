@@ -2,7 +2,8 @@ from database_manip.users import create_user, login_user, follow_user, unfollow_
 from database_manip.playlists import (create_playlist, list_user_playlists, add_song_to_playlist, 
                          remove_song_from_playlist, rename_playlist, slime_playlist, slime_all_playlists,
                          play_playlist, add_album_to_playlist, remove_album_from_playlist)
-from database_manip.songs import search_songs, rate_song, song_played
+from database_manip.songs import search_songs, rate_song, song_played, top_songs_last_30, top_songs_followed, top_genres
+from database_manip.userprofile import view_user_profile
 
 def main():
     print("Music App Database")
@@ -44,6 +45,10 @@ def main():
 13. Follow user
 14. Unfollow user
 15. Delete account
+16. View most popular songs in the last 30 days
+17. View most popular songs from users you follow
+18. View most popular genres in the calendar month
+19. View your user profile
 0.  Logout
         """)
         
@@ -105,7 +110,7 @@ def main():
         elif choice == "14" or choice == "14.":
             unfollow_user(uid)
         
-        elif choice == "15" or choice == "16.":
+        elif choice == "15" or choice == "15.":
             # Delete account
             #createsp, follows, playlist, users
             slime_all_playlists(uid)
@@ -113,6 +118,18 @@ def main():
             slime_user(uid)
             print("Goodbye!")
             break
+        
+        elif choice == "16" or choice == "16.":
+            top_songs_last_30()
+
+        elif choice == "17" or choice == "17.":
+            top_songs_followed(uid)
+
+        elif choice == "18" or choice == "18.":
+            top_genres()
+
+        elif choice == "19" or choice == "19.":
+            view_user_profile(uid)
             
         elif choice == "0" or choice == "0.":
 
