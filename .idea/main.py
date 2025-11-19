@@ -48,6 +48,7 @@ def main():
 16. View most popular songs in the last 30 days
 17. View most popular songs from users you follow
 18. View most popular genres in the calendar month
+19. View your user profile
 0.  Logout
         """)
         

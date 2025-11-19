@@ -4,7 +4,7 @@ from database_manip.cursor import query
 def get_collection_count(uid: int):
     result = query(f"""
         SELECT COUNT(*)
-        FROM Collection
+        FROM Playlist
         WHERE UID = {uid};
     """, fetch=True)
     return result[0][0] if result else 0
@@ -14,7 +14,7 @@ def get_follower_count(uid: int):
     result = query(f"""
         SELECT COUNT(*)
         FROM Follows
-        WHERE FollowedUID = {uid};
+        WHERE Followed = {uid};
     """, fetch=True)
     return result[0][0] if result else 0
 
@@ -23,7 +23,7 @@ def get_following_count(uid: int):
     result = query(f"""
         SELECT COUNT(*)
         FROM Follows
-        WHERE FollowerUID = {uid};
+        WHERE Follower = {uid};
     """, fetch=True)
     return result[0][0] if result else 0
 
@@ -61,5 +61,5 @@ def view_user_profile(uid: int):
     if not top_artists:
         print("  No artist activity found.")
     else:
-        for rank, (aruid, name, plays) in enumerate(top_artists, start=1):
+        for rank, (name, plays) in enumerate(top_artists, start=1):
             print(f"  {rank}. {name} — {plays} plays")
