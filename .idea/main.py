@@ -3,6 +3,7 @@ from database_manip.playlists import (create_playlist, list_user_playlists, add_
                          remove_song_from_playlist, rename_playlist, slime_playlist, slime_all_playlists,
                          play_playlist, add_album_to_playlist, remove_album_from_playlist)
 from database_manip.songs import search_songs, rate_song, song_played, top_songs_last_30, top_songs_followed, top_genres
+from database_manip.userprofile import view_user_profile
 
 def main():
     print("Music App Database")
@@ -126,6 +127,8 @@ def main():
         elif choice == "18" or choice == "18.":
             top_genres()
 
+        elif choice == "19" or choice == "19.":
+            view_user_profile(uid)
             
         elif choice == "0" or choice == "0.":
 
