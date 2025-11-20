@@ -61,5 +61,5 @@ def view_user_profile(uid: int):
     if not top_artists:
         print("  No artist activity found.")
     else:
-        for rank, (name, plays) in enumerate(top_artists, start=1):
+        for rank, (aruid, name, plays) in enumerate(top_artists, start=1):
             print(f"  {rank}. {name} — {plays} plays")
