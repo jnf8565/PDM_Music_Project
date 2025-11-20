@@ -271,18 +271,22 @@ def recommend_songs(uid):
     
     top_songs_str = """
         WITH topSongs AS (
-            SELECT l.suid,
+            SELECT l.SUID,
                     COUNT(*) AS listens,
                     ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS row
                 FROM listensto l
                 JOIN IsASG ig ON l.SUID = ig.SUID
                 WHERE ig.GID = %s OR ig.GID = %s
                 GROUP BY l.SUID
+        ), alreadyListened AS (
+            SELECT SUID AS listened
+                FROM listensto
+                WHERE UID = %s
         )
         SELECT ts.SUID, s.TITLE, s.ARTIST, ts.LISTENS
         FROM topSongs ts
         JOIN song s ON s.SUID = ts.SUID
-        WHERE ts.row <= 10;
+        WHERE ts.row <= 10 AND ts.SUID NOT IN(SELECT listened FROM alreadyListened);
         """
     
     genre_id1 = user_top_genre[0][0]
@@ -293,7 +297,7 @@ def recommend_songs(uid):
     genre_id2 = user_top_genre[1][0]
     genre_name2 = user_top_genre[1][1]
 
-    genre_songs = query(top_songs_str, (genre_id1, genre_id2), fetch=True)
+    genre_songs = query(top_songs_str, (genre_id1, genre_id2, uid), fetch=True)
     #genre_songs1 = query(top_songs_str, (genre_id1,), fetch=True)
 
     print(f"\nTop recommendations from {genre_name1} and {genre_name2}:\n")
@@ -316,7 +320,7 @@ def recommend_songs(uid):
             FROM follows
             WHERE follower = %s
         ),
-        popularity AS (
+        topSongs AS (
             SELECT l.SUID, COUNT(*) AS listens,
                 ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS row
             FROM listensto l
@@ -324,12 +328,16 @@ def recommend_songs(uid):
             JOIN IsASG ig ON l.SUID = ig.SUID
             WHERE ig.GID IN (%s, %s)
             GROUP BY l.SUID
+        ), alreadyListened AS (
+            SELECT SUID AS listened
+                FROM listensto
+                WHERE UID = %s
         )
-        SELECT p.SUID, s.TITLE, s.ARTIST, p.LISTENS
-        FROM popularity p
-        JOIN song s ON s.SUID = p.SUID
-        WHERE row <= 5;
-        """, (uid, genre_id1, genre_id2), fetch=True)
+        SELECT ts.SUID, s.TITLE, s.ARTIST, ts.LISTENS
+        FROM topSongs ts
+        JOIN song s ON s.SUID = ts.SUID
+        WHERE row <= 5 AND ts.SUID NOT IN(SELECT listened FROM alreadyListened);;
+        """, (uid, genre_id1, genre_id2, uid), fetch=True)
     
     print("\nTop songs among followed users:\n")
     if not top_from_followed:
