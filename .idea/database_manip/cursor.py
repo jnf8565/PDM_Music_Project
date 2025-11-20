@@ -26,7 +26,8 @@ def query(sql_query, vars=(), fetch=False):
                 'user' : username,
                 'password' : password,
                 'host' : 'localhost',
-                'port' : tunnel.local_bind_port
+                'port' : tunnel.local_bind_port,
+                'options' : "-c max_parallel_workers_per_gather=0"
             }
             connection = pg2.connect(**params)
             cursor = connection.cursor()
