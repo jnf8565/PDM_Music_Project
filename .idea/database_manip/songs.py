@@ -276,32 +276,39 @@ def recommend_songs(uid):
                     ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS row
                 FROM listensto l
                 JOIN IsASG ig ON l.SUID = ig.SUID
-                WHERE ig.GID = %s
+                WHERE ig.GID = %s OR ig.GID = %s
                 GROUP BY l.SUID
         )
         SELECT ts.SUID, s.TITLE, s.ARTIST, ts.LISTENS
         FROM topSongs ts
         JOIN song s ON s.SUID = ts.SUID
-        WHERE ts.row <= 5;
+        WHERE ts.row <= 10;
         """
     
     genre_id1 = user_top_genre[0][0]
     genre_name1 = user_top_genre[0][1]
-    genre_songs1 = query(top_songs_str, (genre_id1,), fetch=True)
+    if not user_top_genre[1]:
+        print("Only one listened genre on record.")
+        return
+    genre_id2 = user_top_genre[1][0]
+    genre_name2 = user_top_genre[1][1]
 
-    print(f"\nTop recommendations from {genre_name1}:\n")
-    for song in genre_songs1:
-        print(song)
+    genre_songs = query(top_songs_str, (genre_id1, genre_id2), fetch=True)
+    #genre_songs1 = query(top_songs_str, (genre_id1,), fetch=True)
 
-    if not user_top_genre[1][0]:
-        print("Only one genre on record.")
-    else:
-        genre_id2 = user_top_genre[1][0]
-        genre_name2 = user_top_genre[1][1]
-        genre_songs2 = query(top_songs_str, (genre_id2,), fetch=True)
-        print(f"\nTop recommendations from {genre_name2}:\n")
-        for song in genre_songs2:
-            print(f"Title: {song[1]}, Artist: {song[2]}")
+    print(f"\nTop recommendations from {genre_name1} and {genre_name2}:\n")
+    for song in genre_songs:
+        print(f"Title: {song[1]}, Artist: {song[2]}")
+
+    # if not user_top_genre[1][0]:
+    #     print("Only one genre on record.")
+    # else:
+    #     genre_id2 = user_top_genre[1][0]
+    #     genre_name2 = user_top_genre[1][1]
+    #     genre_songs2 = query(top_songs_str, (genre_id2,), fetch=True)
+    #     print(f"\nTop recommendations from {genre_name2}:\n")
+    #     for song in genre_songs2:
+    #         print(f"Title: {song[1]}, Artist: {song[2]}")
 
     top_from_followed = query("""
         WITH followed AS (
