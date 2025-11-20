@@ -336,6 +336,6 @@ def recommend_songs(uid):
         print("No data found")
     else:
         for song in top_from_followed:
-            print(song)
+            print(f"Title: {song[1]}, Artist: {song[2]}")
     
     
