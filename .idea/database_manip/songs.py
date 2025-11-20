@@ -252,4 +252,83 @@ def top_genres():
     print("Top 5 genres this month")
     for i, (genre, plays) in enumerate(results, 1):
         print(f"{i}. {genre} ({plays} plays)")
+
+def recommend_songs(uid):
+    user_top_genre = query("""
+        SELECT g.GID, g.NAME, COUNT(*) AS plays
+        FROM ListensTo l
+        JOIN IsASG ig ON l.SUID = ig.SUID
+        JOIN GENRE g ON g.GID = ig.GID
+        WHERE l.uid = %s
+        GROUP BY g.GID, g.NAME
+        ORDER BY plays DESC
+        LIMIT 2;
+        """, (uid,), fetch=True)
+    
+    if not user_top_genre:
+        print("No listening data found.")
+        return
+    
+    top_songs_str = """
+        WITH topSongs AS (
+            SELECT l.suid,
+                    COUNT(*) AS listens,
+                    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS row
+                FROM listensto l
+                JOIN IsASG ig ON l.SUID = ig.SUID
+                WHERE ig.GID = %s
+                GROUP BY l.SUID
+        )
+        SELECT ts.SUID, s.TITLE, s.ARTIST, ts.LISTENS
+        FROM topSongs ts
+        JOIN song s ON s.SUID = ts.SUID
+        WHERE ts.row <= 5;
+        """
+    
+    genre_id1 = user_top_genre[0][0]
+    genre_name1 = user_top_genre[0][1]
+    genre_songs1 = query(top_songs_str, (genre_id1,), fetch=True)
+
+    print(f"\nTop recommendations from {genre_name1}:\n")
+    for song in genre_songs1:
+        print(song)
+
+    if not user_top_genre[1][0]:
+        print("Only one genre on record.")
+    else:
+        genre_id2 = user_top_genre[1][0]
+        genre_name2 = user_top_genre[1][1]
+        genre_songs2 = query(top_songs_str, (genre_id2,), fetch=True)
+        print(f"\nTop recommendations from {genre_name2}:\n")
+        for song in genre_songs2:
+            print(f"Title: {song[1]}, Artist: {song[2]}")
+
+    top_from_followed = query("""
+        WITH followed AS (
+            SELECT followed AS UID
+            FROM follows
+            WHERE follower = %s
+        ),
+        popularity AS (
+            SELECT l.SUID, COUNT(*) AS listens,
+                ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS row
+            FROM listensto l
+            JOIN followed f ON l.UID = f.UID
+            JOIN IsASG ig ON l.SUID = ig.SUID
+            WHERE ig.GID IN (%s, %s)
+            GROUP BY l.SUID
+        )
+        SELECT p.SUID, s.TITLE, s.ARTIST, p.LISTENS
+        FROM popularity p
+        JOIN song s ON s.SUID = p.SUID
+        WHERE row <= 5;
+        """, (uid, genre_id1, genre_id2), fetch=True)
+    
+    print("\nTop songs among followed users:\n")
+    if not top_from_followed:
+        print("No data found")
+    else:
+        for song in top_from_followed:
+            print(song)
+    
     

@@ -2,7 +2,7 @@ from database_manip.users import create_user, login_user, follow_user, unfollow_
 from database_manip.playlists import (create_playlist, list_user_playlists, add_song_to_playlist, 
                          remove_song_from_playlist, rename_playlist, slime_playlist, slime_all_playlists,
                          play_playlist, add_album_to_playlist, remove_album_from_playlist)
-from database_manip.songs import search_songs, rate_song, song_played, top_songs_last_30, top_songs_followed, top_genres
+from database_manip.songs import search_songs, rate_song, song_played, top_songs_last_30, top_songs_followed, top_genres, recommend_songs
 from database_manip.userprofile import view_user_profile
 
 def main():
@@ -49,6 +49,7 @@ def main():
 17. View most popular songs from users you follow
 18. View most popular genres in the calendar month
 19. View your user profile
+20. Get song recommendations
 0.  Logout
         """)
         
@@ -130,7 +131,10 @@ def main():
 
         elif choice == "19" or choice == "19.":
             view_user_profile(uid)
-            
+        
+        elif choice == "20" or choice == "20.":
+            recommend_songs(uid)
+
         elif choice == "0" or choice == "0.":
 
             print("Logging out. Goodbye!")
