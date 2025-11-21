@@ -305,7 +305,7 @@ def recommend_songs(uid):
 
     print(f"\nTop recommendations from {genre_name1} and {genre_name2}:\n")
     for song in genre_songs:
-        print(f"Title: {song[1]}, Artist: {song[2]}")
+        print(f"ID: {song[0]}, Title: {song[1]}, Artist: {song[2]}")
 
     # if not user_top_genre[1][0]:
     #     print("Only one genre on record.")
@@ -350,6 +350,6 @@ def recommend_songs(uid):
         print("No data found")
     else:
         for song in top_from_followed:
-            print(f"Title: {song[1]}, Artist: {song[2]}")
+            print(f"ID: {song[0]}, Title: {song[1]}, Artist: {song[2]}")
     
     
