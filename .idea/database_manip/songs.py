@@ -200,7 +200,7 @@ def rate_song(uid, song_identifier):
 
 def top_songs_last_30():
     results = query("""
-        SELECT s.Title, a.Name, COUNT(l.SUID) AS plays
+        SELECT s.SUID, s.Title, a.Name, COUNT(l.SUID) AS plays
         FROM ListensTo l
         JOIN song s ON s.SUID = l.SUID
         JOIN CreatesS cs ON cs.SUID = l.SUID
@@ -213,12 +213,12 @@ def top_songs_last_30():
         print("No listening data available")
         return
     print("Top 50 songs in the last 30 days:")
-    for i, (title, artist, plays) in enumerate(results, 1):
-        print(f"{i}. {title} — {artist} ({plays} plays)")
+    for i, (SUID, title, artist, plays) in enumerate(results, 1):
+        print(f"{i}. ID: {SUID}, {title} — {artist} ({plays} plays)")
 
 def top_songs_followed(uid):
     results = query(f"""
-        SELECT s.Title, a.Name, COUNT(l.SUID) AS plays
+        SELECT s.SUID, s.Title, a.Name, COUNT(l.SUID) AS plays
         FROM ListensTo l
         JOIN song s ON s.SUID = l.SUID
         JOIN CreatesS cs ON cs.SUID = l.SUID
@@ -233,25 +233,25 @@ def top_songs_followed(uid):
         print("No listening data available")
         return
     print("Top 50 songs from users you follow")
-    for i, (title, artist, plays) in enumerate(results, 1):
-        print(f"{i}. {title} — {artist} ({plays} plays)")
+    for i, (SUID, title, artist, plays) in enumerate(results, 1):
+        print(f"{i}. ID: {SUID}, {title} — {artist},  ({plays} plays)")
 
 def top_genres():
     results = query("""
-        SELECT g.Name, COUNT(*) AS plays
+        SELECT g.GID, g.Name, COUNT(*) AS plays
         FROM ListensTo l
         JOIN IsASG ig on l.SUID = ig.SUID
         JOIN Genre g on g.GID = ig.GID
         WHERE l.StartTime >= DATE_TRUNC('month', NOW())
-        GROUP BY g.Name
+        GROUP BY g.GID
         ORDER BY plays DESC
         LIMIT 5;""", fetch=True)
     if not results:
         print("No listening data available")
         return
     print("Top 5 genres this month")
-    for i, (genre, plays) in enumerate(results, 1):
-        print(f"{i}. {genre} ({plays} plays)")
+    for i, (GID, genre, plays) in enumerate(results, 1):
+        print(f"{i}. {genre}- ID: {GID}, ({plays} plays)")
 
 def recommend_songs(uid):
     user_top_genre = query("""
